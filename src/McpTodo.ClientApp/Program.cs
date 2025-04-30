@@ -2,12 +2,8 @@ using System.ClientModel;
 
 using McpTodo.ClientApp.Components;
 using McpTodo.ClientApp.Extensions;
-using McpTodo.ClientApp.Services;
-using McpTodo.ClientApp.Services.Ingestion;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
-using Microsoft.Extensions.VectorData;
 
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol.Transport;
@@ -19,7 +15,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
-builder.Services.AddRazorComponents().AddInteractiveServerComponents();
+builder.Services.AddRazorComponents()
+                .AddInteractiveServerComponents();
 
 // You will need to set the endpoint and key to your own values
 // You can do this using Visual Studio's "Manage User Secrets" UI, or on the command line:
@@ -33,18 +30,10 @@ var openAIOptions = new OpenAIClientOptions()
 
 var ghModelsClient = new OpenAIClient(credential, openAIOptions);
 var chatClient = ghModelsClient.GetChatClient("gpt-4o-mini").AsIChatClient();
-var embeddingGenerator = ghModelsClient.GetEmbeddingClient("text-embedding-3-small").AsIEmbeddingGenerator();
 
-var vectorStore = new JsonVectorStore(Path.Combine(AppContext.BaseDirectory, "vector-store"));
-
-builder.Services.AddSingleton<IVectorStore>(vectorStore);
-builder.Services.AddScoped<DataIngestor>();
-builder.Services.AddSingleton<SemanticSearch>();
-builder.Services.AddChatClient(chatClient).UseFunctionInvocation().UseLogging();
-builder.Services.AddEmbeddingGenerator(embeddingGenerator);
-
-builder.Services.AddDbContext<IngestionCacheDbContext>(options =>
-    options.UseSqlite("Data Source=ingestioncache.db"));
+builder.Services.AddChatClient(chatClient)
+                .UseFunctionInvocation()
+                .UseLogging();
 
 builder.Services.AddSingleton<IMcpClient>(sp =>
 {
@@ -72,7 +61,6 @@ builder.Services.AddSingleton<IMcpClient>(sp =>
 });
 
 var app = builder.Build();
-IngestionCacheDbContext.Initialize(app.Services);
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -87,16 +75,8 @@ app.UseAntiforgery();
 
 app.UseStaticFiles();
 app.MapRazorComponents<App>()
-    .AddInteractiveServerRenderMode();
+   .AddInteractiveServerRenderMode();
 
 app.MapDefaultEndpoints();
-
-// By default, we ingest PDF files from the /wwwroot/Data directory. You can ingest from
-// other sources by implementing IIngestionSource.
-// Important: ensure that any content you ingest is trusted, as it may be reflected back
-// to users or could be a source of prompt injection risk.
-await DataIngestor.IngestDataAsync(
-    app.Services,
-    new PDFDirectorySource(Path.Combine(builder.Environment.WebRootPath, "Data")));
 
 app.Run();

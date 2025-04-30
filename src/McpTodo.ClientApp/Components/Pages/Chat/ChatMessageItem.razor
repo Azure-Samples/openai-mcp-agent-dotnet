@@ -25,40 +25,15 @@ else if (Message.Role == ChatRole.Assistant)
                 <div class="assistant-message-header">Assistant</div>
                 <div class="assistant-message-text">
                     <assistant-message markdown="@text"></assistant-message>
-
-                    @* @foreach (var citation in citations ?? [])
-                    {
-                        <ChatCitation File="@citation.File" PageNumber="@citation.Page" Quote="@citation.Quote" />
-                    } *@
                 </div>
             </div>
         }
-        @* else if (content is FunctionCallContent { Name: "Search" } fcc && fcc.Arguments?.TryGetValue("searchPhrase", out var searchPhrase) is true)
-        {
-            <div class="assistant-search">
-                <div class="assistant-search-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-                    </svg>
-                </div>
-                <div class="assistant-search-content">
-                    Searching:
-                    <span class="assistant-search-phrase">@searchPhrase</span>
-                    @if (fcc.Arguments?.TryGetValue("filenameFilter", out var filenameObj) is true && filenameObj is string filename && !string.IsNullOrEmpty(filename))
-                    {
-                        <text> in </text><span class="assistant-search-phrase">@filename</span>
-                    }
-                </div>
-            </div>
-        } *@
     }
 }
 
 @code {
     private static readonly ConditionalWeakTable<ChatMessage, ChatMessageItem> SubscribersLookup = new();
     private static readonly Regex CitationRegex = new(@"<citation filename='(?<file>[^']*)' page_number='(?<page>\d*)'>(?<quote>.*?)</citation>", RegexOptions.NonBacktracking);
-
-    //private List<(string File, int? Page, string Quote)>? citations;
 
     [Parameter, EditorRequired]
     public required ChatMessage Message { get; set; }
@@ -69,11 +44,6 @@ else if (Message.Role == ChatRole.Assistant)
     protected override void OnInitialized()
     {
         SubscribersLookup.AddOrUpdate(Message, this);
-
-        // if (!InProgress && Message.Role == ChatRole.Assistant && Message.Text is { Length: > 0 } text)
-        // {
-        //     ParseCitations(text);
-        // }
     }
 
     public static void NotifyChanged(ChatMessage source)
@@ -83,12 +53,4 @@ else if (Message.Role == ChatRole.Assistant)
             subscriber.StateHasChanged();
         }
     }
-
-//    private void ParseCitations(string text)
-//    {
-//        var matches = CitationRegex.Matches(text);
-//        citations = matches.Any()
-//            ? matches.Select(m => (m.Groups["file"].Value, int.TryParse(m.Groups["page"].Value, out var page) ? page : (int?)null, m.Groups["quote"].Value)).ToList()
-//            : null;
-//    }
 }

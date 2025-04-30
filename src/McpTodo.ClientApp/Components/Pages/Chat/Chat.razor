@@ -4,8 +4,6 @@
 @using ModelContextProtocol.Client
 
 @inject IChatClient ChatClient
-@inject NavigationManager Nav
-@inject SemanticSearch Search
 @inject IMcpClient McpClient
 
 @implements IDisposable
@@ -28,8 +26,10 @@
 @code {
     private const string SystemPrompt = @"
         You are an assistant who manages to-do list items.
-        Do not answer anything other than the to-do list related ones.
+        If the question is not clear, ask for clarification.
+        If the question is irrelevant to the to-do list one, respond like 'I only answer the to-do list related questions'.
         Use only simple markdown to format your responses.
+        Answer in English.
         ";
 
     private readonly ChatOptions chatOptions = new();
