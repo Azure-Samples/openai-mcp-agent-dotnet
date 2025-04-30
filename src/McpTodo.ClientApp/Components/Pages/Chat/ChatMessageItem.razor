@@ -26,14 +26,14 @@ else if (Message.Role == ChatRole.Assistant)
                 <div class="assistant-message-text">
                     <assistant-message markdown="@text"></assistant-message>
 
-                    @foreach (var citation in citations ?? [])
+                    @* @foreach (var citation in citations ?? [])
                     {
                         <ChatCitation File="@citation.File" PageNumber="@citation.Page" Quote="@citation.Quote" />
-                    }
+                    } *@
                 </div>
             </div>
         }
-        else if (content is FunctionCallContent { Name: "Search" } fcc && fcc.Arguments?.TryGetValue("searchPhrase", out var searchPhrase) is true)
+        @* else if (content is FunctionCallContent { Name: "Search" } fcc && fcc.Arguments?.TryGetValue("searchPhrase", out var searchPhrase) is true)
         {
             <div class="assistant-search">
                 <div class="assistant-search-icon">
@@ -50,7 +50,7 @@ else if (Message.Role == ChatRole.Assistant)
                     }
                 </div>
             </div>
-        }
+        } *@
     }
 }
 
@@ -58,7 +58,7 @@ else if (Message.Role == ChatRole.Assistant)
     private static readonly ConditionalWeakTable<ChatMessage, ChatMessageItem> SubscribersLookup = new();
     private static readonly Regex CitationRegex = new(@"<citation filename='(?<file>[^']*)' page_number='(?<page>\d*)'>(?<quote>.*?)</citation>", RegexOptions.NonBacktracking);
 
-    private List<(string File, int? Page, string Quote)>? citations;
+    //private List<(string File, int? Page, string Quote)>? citations;
 
     [Parameter, EditorRequired]
     public required ChatMessage Message { get; set; }
@@ -70,10 +70,10 @@ else if (Message.Role == ChatRole.Assistant)
     {
         SubscribersLookup.AddOrUpdate(Message, this);
 
-        if (!InProgress && Message.Role == ChatRole.Assistant && Message.Text is { Length: > 0 } text)
-        {
-            ParseCitations(text);
-        }
+        // if (!InProgress && Message.Role == ChatRole.Assistant && Message.Text is { Length: > 0 } text)
+        // {
+        //     ParseCitations(text);
+        // }
     }
 
     public static void NotifyChanged(ChatMessage source)
@@ -84,11 +84,11 @@ else if (Message.Role == ChatRole.Assistant)
         }
     }
 
-    private void ParseCitations(string text)
-    {
-        var matches = CitationRegex.Matches(text);
-        citations = matches.Any()
-            ? matches.Select(m => (m.Groups["file"].Value, int.TryParse(m.Groups["page"].Value, out var page) ? page : (int?)null, m.Groups["quote"].Value)).ToList()
-            : null;
-    }
+//    private void ParseCitations(string text)
+//    {
+//        var matches = CitationRegex.Matches(text);
+//        citations = matches.Any()
+//            ? matches.Select(m => (m.Groups["file"].Value, int.TryParse(m.Groups["page"].Value, out var page) ? page : (int?)null, m.Groups["quote"].Value)).ToList()
+//            : null;
+//    }
 }

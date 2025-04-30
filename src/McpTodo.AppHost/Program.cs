@@ -4,6 +4,7 @@ var config = builder.Configuration;
 
 var mcpserver = builder.AddNpmApp("mcpserver", "../McpTodo.ServerApp")
                        .WithHttpEndpoint(port: 3000, env: "PORT")
+                       .WithNpmPackageInstallation()
                        .PublishAsDockerFile();
 
 builder.AddProject<Projects.McpTodo_ClientApp>("mcpclient")

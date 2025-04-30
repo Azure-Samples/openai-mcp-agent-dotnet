@@ -1,6 +1,7 @@
 using System.ClientModel;
 
 using McpTodo.ClientApp.Components;
+using McpTodo.ClientApp.Extensions;
 using McpTodo.ClientApp.Services;
 using McpTodo.ClientApp.Services.Ingestion;
 
@@ -45,17 +46,18 @@ builder.Services.AddEmbeddingGenerator(embeddingGenerator);
 builder.Services.AddDbContext<IngestionCacheDbContext>(options =>
     options.UseSqlite("Data Source=ingestioncache.db"));
 
-builder.Services.AddHttpClient<IMcpClient, IMcpClient>((http, sp) =>
+builder.Services.AddSingleton<IMcpClient>(sp =>
 {
-    http.BaseAddress = new Uri("https+http://mcpserver");
-
+    var config = sp.GetRequiredService<IConfiguration>();
     var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
+
+    var uri = new Uri("https+http://mcpserver").Resolve(config);
 
     var clientTransportOptions = new SseClientTransportOptions()
     {
-        Endpoint = http.BaseAddress,
+        Endpoint = new Uri($"{uri.AbsoluteUri.TrimEnd('/')}/sse")
     };
-    var clientTransport = new SseClientTransport(clientTransportOptions, http, loggerFactory);
+    var clientTransport = new SseClientTransport(clientTransportOptions, loggerFactory);
 
     var clientOptions = new McpClientOptions()
     {
@@ -65,9 +67,8 @@ builder.Services.AddHttpClient<IMcpClient, IMcpClient>((http, sp) =>
             Version = "1.0.0",
         }
     };
-    var client = McpClientFactory.CreateAsync(clientTransport, clientOptions, loggerFactory).GetAwaiter().GetResult();
 
-    return client;
+    return McpClientFactory.CreateAsync(clientTransport, clientOptions, loggerFactory).GetAwaiter().GetResult();
 });
 
 var app = builder.Build();
