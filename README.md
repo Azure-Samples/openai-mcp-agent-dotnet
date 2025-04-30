@@ -1,4 +1,53 @@
-# Project Name
+# .NET OpenAI MCP Agent
+
+TBD
+
+- Clone this repo
+
+    ```bash
+    git clone https://github.com/Azure-Samples/openai-mcp-agent-dotnet.git
+    ```
+    
+
+- Clone the MCP server
+
+    ```bash
+    git clone https://github.com/Azure-Samples/mcp-container-ts.git ./src/McpTodo.ServerApp
+    ```
+    
+- Add GitHub PAT (for GitHub Model)
+
+    ```bash
+    dotnet user-secrets --project ./src/McpTodo.AppHost set GitHubModels:Token "{{GITHUB_PAT}}"
+    ```
+
+- Add Azure OpenAI API Key
+
+    ```bash
+    dotnet user-secrets --project ./src/McpTodo.AppHost set ConnectionStrings:openai "Endpoint={{AZURE_OPENAI_ENDPOINT}};Key={{AZURE_OPENAI_API_KEY}}"
+    ```
+
+- Install npm packages
+
+    ```bash
+    pushd ./src/McpTodo.ServerApp
+    npm install
+    popd
+    ```
+
+- Install NuGet packages
+
+    ```bash
+    dotnet restore && dotnet build
+    ```
+    
+- Run the client app
+
+    ```bash
+    dotnet watch run --project ./src/McpTodo.AppHost
+    ```
+
+
 
 (short, 1-3 sentenced, description of the project)
 

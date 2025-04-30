@@ -8,6 +8,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.VectorData;
 
+using ModelContextProtocol.Client;
+using ModelContextProtocol.Protocol.Transport;
+using ModelContextProtocol.Protocol.Types;
+
 using OpenAI;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -40,6 +44,31 @@ builder.Services.AddEmbeddingGenerator(embeddingGenerator);
 
 builder.Services.AddDbContext<IngestionCacheDbContext>(options =>
     options.UseSqlite("Data Source=ingestioncache.db"));
+
+builder.Services.AddHttpClient<IMcpClient, IMcpClient>((http, sp) =>
+{
+    http.BaseAddress = new Uri("https+http://mcpserver");
+
+    var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
+
+    var clientTransportOptions = new SseClientTransportOptions()
+    {
+        Endpoint = http.BaseAddress,
+    };
+    var clientTransport = new SseClientTransport(clientTransportOptions, http, loggerFactory);
+
+    var clientOptions = new McpClientOptions()
+    {
+        ClientInfo = new Implementation()
+        {
+            Name = "MCP Todo Client",
+            Version = "1.0.0",
+        }
+    };
+    var client = McpClientFactory.CreateAsync(clientTransport, clientOptions, loggerFactory).GetAwaiter().GetResult();
+
+    return client;
+});
 
 var app = builder.Build();
 IngestionCacheDbContext.Initialize(app.Services);
