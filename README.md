@@ -1,33 +1,53 @@
 # .NET OpenAI MCP Agent
 
-TBD
+This is a sample AI agent app using OpenAI models with any MCP server.
 
-- Clone this repo
+## Features
+
+This app provides features like:
+
+- It is an MCP host + MCP client app written in .NET Blazor.
+- The MCP client app connects to a to-do MCP server written in TypeScript.
+- The MCP client app connects to any MCP server through Azure API Management.
+
+![Overall architecture diagram](./images/overall-architecture-diagram.png)
+
+## Prerequisites
+
+- [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
+- [Visual Studio Code](https://code.visualstudio.com/Download) + [C# Dev Kit](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.csdevkit)
+- [node.js](https://nodejs.org/en/download) LTS
+- [Docker Desktop](https://docs.docker.com/get-started/get-docker/) or [Podman Desktop](https://podman-desktop.io/downloads)
+
+## Getting Started
+
+### Run it locally
+
+1. Clone this repo.
 
     ```bash
     git clone https://github.com/Azure-Samples/openai-mcp-agent-dotnet.git
     ```
-    
 
-- Clone the MCP server
+1. Clone the MCP server.
 
     ```bash
     git clone https://github.com/Azure-Samples/mcp-container-ts.git ./src/McpTodo.ServerApp
     ```
-    
-- Add GitHub PAT (for GitHub Model)
+
+1. Add GitHub PAT (for GitHub Model).
 
     ```bash
     dotnet user-secrets --project ./src/McpTodo.AppHost set GitHubModels:Token "{{GITHUB_PAT}}"
     ```
 
-- Add Azure OpenAI API Key
+1. Add Azure OpenAI API Key.
 
     ```bash
     dotnet user-secrets --project ./src/McpTodo.AppHost set ConnectionStrings:openai "Endpoint={{AZURE_OPENAI_ENDPOINT}};Key={{AZURE_OPENAI_API_KEY}}"
     ```
 
-- Install npm packages
+1. Install npm packages.
 
     ```bash
     pushd ./src/McpTodo.ServerApp
@@ -35,93 +55,84 @@ TBD
     popd
     ```
 
-- Install NuGet packages
+1. Install NuGet packages.
 
     ```bash
     dotnet restore && dotnet build
     ```
 
-- Run the host app
+1. Run the host app.
 
     ```bash
     cd ./src/McpTodo.ServerApp
     npm start
     ```
 
-- Run the client app
+1. Run the client app in another terminal.
 
     ```bash
     dotnet watch run --project ./src/McpTodo.ClientApp
     ```
 
-- Run both apps in containers
+1. Navigate to `https://localhost:7256` or `http://localhost:5011` and enter prompts like:
+
+    ```text
+    Give me list of to do.
+    Set "meeting at 1pm".
+    Give me list of to do.
+    Mark #1 as completed.
+    Delete #1 from the to-do list.
+    ```
+
+### Run it in local containers
+
+1. Export user secrets to `.env`.
 
     ```bash
     # bash/zsh
-    dotnet user-secrets list --project src/McpTodo.ClientApp | sed 's/GitHubModels:Token/GitHubModels__Token/' > .env
-    docker compose up --build
+    dotnet user-secrets list --project src/McpTodo.ClientApp \
+        | sed 's/GitHubModels:Token/GitHubModels__Token/' \
+        | sed 's/ConnectionStrings:openai/ConnectionStrings__openai/' > .env
     ```
 
     ```bash
     # PowerShell
-    (dotnet user-secrets list --project src/McpTodo.ClientApp).Replace("GitHubModels:Token", "GitHubModels__Token") | Out-File ".env" -Force
+    (dotnet user-secrets list --project src/McpTodo.ClientApp).Replace("GitHubModels:Token", "GitHubModels__Token").Replace("ConnectionStrings:openai", "ConnectionStrings__openai") | Out-File ".env" -Force
+    ```
+
+1. Run both apps in containers.
+
+    ```bash
+    # Docker
     docker compose up --build
     ```
-    
 
+    ```bash
+    # Podman
+    podman compose up --build
+    ```
 
-(short, 1-3 sentenced, description of the project)
+### Run it on Azure Container Apps
 
-## Features
+1. Login to Azure.
 
-This project framework provides the following features:
+    ```bash
+    azd auth login
+    ```
 
-* Feature 1
-* Feature 2
-* ...
+1. Deploy apps to Azure.
 
-## Getting Started
+    ```bash
+    azd up
+    ```
 
-### Prerequisites
+   During the deployment, you will be asked to enter the Azure Subscription, location and GitHub PAT.
 
-(ideally very short, if any)
+## TO-DO
 
-- OS
-- Library version
-- ...
-
-### Installation
-
-(ideally very short)
-
-- npm install [package name]
-- mvn install
-- ...
-
-### Quickstart
-(Add steps to get up and running quickly)
-
-1. git clone [repository clone url]
-2. cd [repository name]
-3. ...
-
-
-## Demo
-
-A demo app is included to show how to use the project.
-
-To run the demo, follow these steps:
-
-(Add steps to start up the demo)
-
-1.
-2.
-3.
+- Add [Azure AI Project](https://github.com/Azure/azure-sdk-for-net/tree/main/sdk/cloudmachine) integration.
+- Remove GitHub Models integration.
 
 ## Resources
 
-(Any additional resources or related projects)
-
-- Link to supporting information
-- Link to similar sample
-- ...
+TBD
