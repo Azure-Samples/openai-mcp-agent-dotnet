@@ -1,33 +1,53 @@
 # .NET OpenAI MCP Agent
 
-TBD
+This is a sample AI agent app using OpenAI models with any MCP server.
 
-- Clone this repo
+## Features
+
+This app provides features like:
+
+- It is an MCP host + MCP client app written in .NET Blazor.
+- The MCP client app connects to a to-do MCP server written in TypeScript.
+- The MCP client app connects to any MCP server through Azure API Management.
+
+![Overall architecture diagram](./images/overall-architecture-diagram.png)
+
+## Prerequisites
+
+- [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
+- [Visual Studio Code](https://code.visualstudio.com/Download) + [C# Dev Kit](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.csdevkit)
+- [node.js](https://nodejs.org/en/download) LTS
+- [Docker Desktop](https://docs.docker.com/get-started/get-docker/) or [Podman Desktop](https://podman-desktop.io/downloads)
+
+## Getting Started
+
+### Run it locally
+
+1. Clone this repo.
 
     ```bash
     git clone https://github.com/Azure-Samples/openai-mcp-agent-dotnet.git
     ```
-    
 
-- Clone the MCP server
+1. Clone the MCP server.
 
     ```bash
     git clone https://github.com/Azure-Samples/mcp-container-ts.git ./src/McpTodo.ServerApp
     ```
-    
-- Add GitHub PAT (for GitHub Model)
+
+1. Add GitHub PAT (for GitHub Model).
 
     ```bash
     dotnet user-secrets --project ./src/McpTodo.AppHost set GitHubModels:Token "{{GITHUB_PAT}}"
     ```
 
-- Add Azure OpenAI API Key
+1. Add Azure OpenAI API Key.
 
     ```bash
     dotnet user-secrets --project ./src/McpTodo.AppHost set ConnectionStrings:openai "Endpoint={{AZURE_OPENAI_ENDPOINT}};Key={{AZURE_OPENAI_API_KEY}}"
     ```
 
-- Install npm packages
+1. Install npm packages.
 
     ```bash
     pushd ./src/McpTodo.ServerApp
@@ -35,72 +55,111 @@ TBD
     popd
     ```
 
-- Install NuGet packages
+1. Install NuGet packages.
 
     ```bash
     dotnet restore && dotnet build
     ```
-    
-- Run the client app
+
+1. Run the host app.
 
     ```bash
-    dotnet watch run --project ./src/McpTodo.AppHost
+    cd ./src/McpTodo.ServerApp
+    npm start
     ```
 
+1. Run the client app in another terminal.
 
+    ```bash
+    dotnet watch run --project ./src/McpTodo.ClientApp
+    ```
 
-(short, 1-3 sentenced, description of the project)
+1. Navigate to `https://localhost:7256` or `http://localhost:5011` and enter prompts like:
 
-## Features
+    ```text
+    Give me list of to do.
+    Set "meeting at 1pm".
+    Give me list of to do.
+    Mark #1 as completed.
+    Delete #1 from the to-do list.
+    ```
 
-This project framework provides the following features:
+### Run it in local containers
 
-* Feature 1
-* Feature 2
-* ...
+1. Export user secrets to `.env`.
 
-## Getting Started
+    ```bash
+    # bash/zsh
+    dotnet user-secrets list --project src/McpTodo.ClientApp \
+        | sed 's/GitHubModels:Token/GitHubModels__Token/' \
+        | sed 's/ConnectionStrings:openai/ConnectionStrings__openai/' > .env
+    ```
 
-### Prerequisites
+    ```bash
+    # PowerShell
+    (dotnet user-secrets list --project src/McpTodo.ClientApp).Replace("GitHubModels:Token", "GitHubModels__Token").Replace("ConnectionStrings:openai", "ConnectionStrings__openai") | Out-File ".env" -Force
+    ```
 
-(ideally very short, if any)
+1. Run both apps in containers.
 
-- OS
-- Library version
-- ...
+    ```bash
+    # Docker
+    docker compose up --build
+    ```
 
-### Installation
+    ```bash
+    # Podman
+    podman compose up --build
+    ```
 
-(ideally very short)
+1. Navigate to `https://localhost:8080` and enter prompts like:
 
-- npm install [package name]
-- mvn install
-- ...
+    ```text
+    Give me list of to do.
+    Set "meeting at 1pm".
+    Give me list of to do.
+    Mark #1 as completed.
+    Delete #1 from the to-do list.
+    ```
 
-### Quickstart
-(Add steps to get up and running quickly)
+### Run it on Azure Container Apps
 
-1. git clone [repository clone url]
-2. cd [repository name]
-3. ...
+1. Login to Azure.
 
+    ```bash
+    azd auth login
+    ```
 
-## Demo
+1. Deploy apps to Azure.
 
-A demo app is included to show how to use the project.
+    ```bash
+    azd up
+    ```
 
-To run the demo, follow these steps:
+   During the deployment, you will be asked to enter the Azure Subscription, location and GitHub PAT.
 
-(Add steps to start up the demo)
+1. In the terminal, get the client app URL deployed. It might look like:
 
-1.
-2.
-3.
+    ```bash
+    https://mcptodo-clientapp.{{some-random-string}}.{{location}}.azurecontainerapps.io/
+    ```
+
+1. Navigate to the client app URL, log-in to the app and enter prompts like:
+
+    ```text
+    Give me list of to do.
+    Set "meeting at 1pm".
+    Give me list of to do.
+    Mark #1 as completed.
+    Delete #1 from the to-do list.
+    ```
+
+## TO-DO
+
+- Add [Azure AI Project](https://github.com/Azure/azure-sdk-for-net/tree/main/sdk/cloudmachine) integration.
+- Remove GitHub Models integration.
+- Add devcontainer settings.
 
 ## Resources
 
-(Any additional resources or related projects)
-
-- Link to supporting information
-- Link to similar sample
-- ...
+TBD

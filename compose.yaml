@@ -1,0 +1,33 @@
+name: MCP Todo .NET
+
+networks:
+  mcp-todo:
+    name: mcp-todo
+
+services:
+  todo-server:
+    container_name: todo-server
+    build:
+      context: ./src/McpTodo.ServerApp
+      dockerfile: Dockerfile
+    ports:
+      - 3000:3000
+    networks:
+      - mcp-todo
+
+  todo-client:
+    container_name: todo-client
+    build:
+      context: .
+      dockerfile: Dockerfile.client
+    ports:
+      - 8080:8080
+    depends_on:
+      - todo-server
+    env_file:
+      - path: ./.env
+        required: true
+    environment:
+      - McpServers__TodoList=http://todo-server:3000
+    networks:
+      - mcp-todo
