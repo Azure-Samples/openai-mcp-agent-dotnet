@@ -40,13 +40,34 @@ TBD
     ```bash
     dotnet restore && dotnet build
     ```
-    
+
+- Run the host app
+
+    ```bash
+    cd ./src/McpTodo.ServerApp
+    npm start
+    ```
+
 - Run the client app
 
     ```bash
-    dotnet watch run --project ./src/McpTodo.AppHost
+    dotnet watch run --project ./src/McpTodo.ClientApp
     ```
 
+- Run both apps in containers
+
+    ```bash
+    # bash/zsh
+    dotnet user-secrets list --project src/McpTodo.ClientApp | sed 's/GitHubModels:Token/GitHubModels__Token/' > .env
+    docker compose up --build
+    ```
+
+    ```bash
+    # PowerShell
+    (dotnet user-secrets list --project src/McpTodo.ClientApp).Replace("GitHubModels:Token", "GitHubModels__Token") | Out-File ".env" -Force
+    docker compose up --build
+    ```
+    
 
 
 (short, 1-3 sentenced, description of the project)

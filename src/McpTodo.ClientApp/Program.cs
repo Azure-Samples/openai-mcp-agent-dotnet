@@ -40,7 +40,11 @@ builder.Services.AddSingleton<IMcpClient>(sp =>
     var config = sp.GetRequiredService<IConfiguration>();
     var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
 
-    var uri = new Uri("https+http://mcpserver").Resolve(config);
+    // With .NET Aspire
+    // var uri = new Uri("https+http://mcpserver").Resolve(config);
+
+    // Without .NET Aspire
+    var uri = new Uri(config["McpServers:TodoList"]!);
 
     var clientTransportOptions = new SseClientTransportOptions()
     {
