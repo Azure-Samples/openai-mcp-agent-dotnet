@@ -132,6 +132,7 @@ This app provides features like:
 
 - Add [Azure AI Project](https://github.com/Azure/azure-sdk-for-net/tree/main/sdk/cloudmachine) integration.
 - Remove GitHub Models integration.
+- Add devcontainer settings.
 
 ## Resources
 
