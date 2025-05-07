@@ -52,6 +52,61 @@ module storageAccount 'br/public:avm/res/storage/storage-account:0.15.0' = {
   }
 }
 
+// API Management
+module apiManagement 'br/public:avm/res/api-management/service:0.9.1' = {
+  name: 'apimanagement'
+  params: {
+    name: '${abbrs.apiManagementService}${resourceToken}'
+    location: location
+    tags: tags
+    publisherName: 'MCP Todo Agent'
+    publisherEmail: 'mcp-todo@contoso.com'
+    sku: 'Consumption'
+    managedIdentities: {
+      systemAssigned: false
+      userAssignedResourceIds: [
+        mcpTodoClientAppIdentity.outputs.resourceId
+      ]
+    }
+    products: [
+      {
+        displayName: 'default'
+        name: 'default'
+        subscriptionRequired: false
+        state: 'published'
+        apis: [
+          {
+            name: 'mcp-server'
+          }
+        ]
+      }
+    ]
+    subscriptions: [
+      {
+        displayName: 'default'
+        name: 'default'
+        scope: '/products/default'
+        state: 'active'
+      }
+    ]
+    apis: [
+      {
+        name: 'mcp-server'
+        displayName: 'MCP Server'
+        path: 'mcp-server'
+        apiType: 'http'
+        format: 'openapi+json'
+        value: loadJsonContent('./apis/openapi.json')
+        serviceUrl: 'https://${mcpTodoServerApp.outputs.fqdn}'
+        protocols: [
+          'https'
+        ]
+        subscriptionRequired: false
+      }
+    ]
+  }
+}
+
 // Container registry
 module containerRegistry 'br/public:avm/res/container-registry/registry:0.6.0' = {
   name: 'registry'
@@ -207,6 +262,10 @@ module mcpTodoClientApp 'br/public:avm/res/app/container-app:0.16.0' = {
         name: 'connectionstrings-openai'
         value: openAIConnectionString
       }
+      {
+        name: 'apim-subscription-key'
+        value: listSecrets(resourceId('Microsoft.ApiManagement/service/subscriptions', '${abbrs.apiManagementService}${resourceToken}', 'default'), '2024-06-01-preview').primaryKey
+      }
     ]
     containers: [
       {
@@ -231,11 +290,15 @@ module mcpTodoClientApp 'br/public:avm/res/app/container-app:0.16.0' = {
           }
           {
             name: 'McpServers__TodoList'
-            value: 'https://${mcpTodoServerApp.outputs.fqdn}'
+            value: 'https://${apiManagement.outputs.name}.azure-api.net/mcp-server'
           }
           {
             name: 'ConnectionStrings__OpenAI'
             secretRef: 'connectionstrings-openai'
+          }
+          {
+            name: 'APIM__SubscriptionKey'
+            secretRef: 'apim-subscription-key'
           }
         ]
       }
