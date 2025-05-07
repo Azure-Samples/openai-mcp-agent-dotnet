@@ -1,5 +1,7 @@
 using System.ClientModel;
 
+using Azure.AI.OpenAI;
+
 using McpTodo.ClientApp.Components;
 using McpTodo.ClientApp.Extensions;
 
@@ -13,23 +15,28 @@ using OpenAI;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var config = builder.Configuration;
+var connectionstring = config.GetConnectionString("openai") ?? throw new InvalidOperationException("Missing connection string: openai.");
+var endpoint = connectionstring.Split(';').FirstOrDefault(x => x.StartsWith("Endpoint=", StringComparison.InvariantCultureIgnoreCase))?.Split('=')[1]
+                   ?? throw new InvalidOperationException("Missing endpoint.");
+var apiKey = connectionstring.Split(';').FirstOrDefault(x => x.StartsWith("Key=", StringComparison.InvariantCultureIgnoreCase))?.Split('=')[1]
+                 ?? throw new InvalidOperationException("Missing API key.");
+
 builder.AddServiceDefaults();
 
 builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();
 
-// You will need to set the endpoint and key to your own values
-// You can do this using Visual Studio's "Manage User Secrets" UI, or on the command line:
-//   cd this-project-directory
-//   dotnet user-secrets set GitHubModels:Token YOUR-GITHUB-TOKEN
-var credential = new ApiKeyCredential(builder.Configuration["GitHubModels:Token"] ?? throw new InvalidOperationException("Missing configuration: GitHubModels:Token. See the README for details."));
+var credential = new ApiKeyCredential(apiKey);
 var openAIOptions = new OpenAIClientOptions()
 {
-    Endpoint = new Uri("https://models.inference.ai.azure.com")
+    Endpoint = new Uri(endpoint),
 };
 
-var ghModelsClient = new OpenAIClient(credential, openAIOptions);
-var chatClient = ghModelsClient.GetChatClient("gpt-4o-mini").AsIChatClient();
+var openAIClient = endpoint.TrimEnd('/').Equals("https://models.inference.ai.azure.com")
+                   ? new OpenAIClient(credential, openAIOptions)
+                   : new AzureOpenAIClient(new Uri(endpoint), credential);
+var chatClient = openAIClient.GetChatClient(config["OpenAI:DeploymentName"]).AsIChatClient();
 
 builder.Services.AddChatClient(chatClient)
                 .UseFunctionInvocation()

@@ -13,9 +13,9 @@ param mcpTodoServerAppExists bool
 @description('Id of the user or app to assign application roles')
 param principalId string
 
-@description('The GitHub PAT to call GitHub Models API.')
+@description('The connection string to OpenAI.')
 @secure()
-param githubToken string
+param openAIConnectionString string
 
 var abbrs = loadJsonContent('./abbreviations.json')
 var resourceToken = uniqueString(subscription().id, resourceGroup().id, location)
@@ -204,8 +204,8 @@ module mcpTodoClientApp 'br/public:avm/res/app/container-app:0.16.0' = {
     }
     secrets: [
       {
-        name: 'github-models-token'
-        value: githubToken
+        name: 'connectionstrings-openai'
+        value: openAIConnectionString
       }
     ]
     containers: [
@@ -234,8 +234,8 @@ module mcpTodoClientApp 'br/public:avm/res/app/container-app:0.16.0' = {
             value: 'https://${mcpTodoServerApp.outputs.fqdn}'
           }
           {
-            name: 'GitHubModels__Token'
-            secretRef: 'github-models-token'
+            name: 'ConnectionStrings__OpenAI'
+            secretRef: 'connectionstrings-openai'
           }
         ]
       }

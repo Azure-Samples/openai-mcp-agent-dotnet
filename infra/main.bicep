@@ -15,9 +15,9 @@ param mcpTodoClientAppExists bool
 @description('Id of the user or app to assign application roles')
 param principalId string
 
-@description('The GitHub PAT to call GitHub Models API.')
+@description('The connection string to OpenAI.')
 @secure()
-param githubToken string
+param openAIConnectionString string
 
 // Tags that should be applied to all resources.
 // 
@@ -45,7 +45,7 @@ module resources 'resources.bicep' = {
     principalId: principalId
     mcpTodoServerAppExists: mcpTodoServerAppExists
     mcpTodoClientAppExists: mcpTodoClientAppExists
-    githubToken: githubToken
+    openAIConnectionString: openAIConnectionString
   }
 }
 

@@ -35,17 +35,13 @@ This app provides features like:
     git clone https://github.com/Azure-Samples/mcp-container-ts.git ./src/McpTodo.ServerApp
     ```
 
-1. Add GitHub PAT (for GitHub Model).
-
-    ```bash
-    dotnet user-secrets --project ./src/McpTodo.AppHost set GitHubModels:Token "{{GITHUB_PAT}}"
-    ```
-
 1. Add Azure OpenAI API Key.
 
     ```bash
-    dotnet user-secrets --project ./src/McpTodo.AppHost set ConnectionStrings:openai "Endpoint={{AZURE_OPENAI_ENDPOINT}};Key={{AZURE_OPENAI_API_KEY}}"
+    dotnet user-secrets --project ./src/McpTodo.ClientApp set ConnectionStrings:openai "Endpoint={{AZURE_OPENAI_ENDPOINT}};Key={{AZURE_OPENAI_API_KEY}}"
     ```
+
+   > **NOTE**: You can add GitHub PAT in the same format above to use GitHub Models like `Endpoint=https://models.inference.ai.azure.com;Key={{GITHUB_PAT}}`.
 
 1. Install npm packages.
 
@@ -91,13 +87,13 @@ This app provides features like:
     ```bash
     # bash/zsh
     dotnet user-secrets list --project src/McpTodo.ClientApp \
-        | sed 's/GitHubModels:Token/GitHubModels__Token/' \
         | sed 's/ConnectionStrings:openai/ConnectionStrings__openai/' > .env
     ```
 
     ```bash
     # PowerShell
-    (dotnet user-secrets list --project src/McpTodo.ClientApp).Replace("GitHubModels:Token", "GitHubModels__Token").Replace("ConnectionStrings:openai", "ConnectionStrings__openai") | Out-File ".env" -Force
+    (dotnet user-secrets list --project src/McpTodo.ClientApp).Replace("ConnectionStrings:openai", "ConnectionStrings__openai") `
+        | Out-File ".env" -Force
     ```
 
 1. Run both apps in containers.
@@ -136,7 +132,8 @@ This app provides features like:
     azd up
     ```
 
-   During the deployment, you will be asked to enter the Azure Subscription, location and GitHub PAT.
+   > **NOTE**: During the deployment, you will be asked to enter the Azure Subscription, location and OpenAI connection string.
+   > The connection string should be in the format of `Endpoint={{AZURE_OPENAI_ENDPOINT}};Key={{AZURE_OPENAI_API_KEY}}`.
 
 1. In the terminal, get the client app URL deployed. It might look like:
 
@@ -156,10 +153,10 @@ This app provides features like:
 
 ## TO-DO
 
-- Add [Azure AI Project](https://github.com/Azure/azure-sdk-for-net/tree/main/sdk/cloudmachine) integration.
-- Add [Azure API Management](https://learn.microsoft.com/azure/api-management/credentials-overview) integration.
-- Remove GitHub Models integration.
-- Add devcontainer settings.
+- [x] Add [Azure AI Project](https://github.com/Azure/azure-sdk-for-net/tree/main/sdk/cloudmachine) integration.
+- [ ] Add [Azure API Management](https://learn.microsoft.com/azure/api-management/credentials-overview) integration.
+- [x] Remove GitHub Models integration.
+- [ ] Add devcontainer settings.
 
 ## Resources
 
