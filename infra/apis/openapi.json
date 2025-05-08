@@ -15,34 +15,6 @@
     }
   ],
   "paths": {
-    "/messages": {
-      "post": {
-        "tags": [
-          "MCP"
-        ],
-        "summary": "messages",
-        "description": "messages",
-        "operationId": "messages",
-        "parameters": [
-          {
-            "name": "Content-Type",
-            "in": "header",
-            "required": true,
-            "schema": {
-              "enum": [
-                ""
-              ],
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "null"
-          }
-        }
-      }
-    },
     "/sse": {
       "get": {
         "tags": [
@@ -51,19 +23,21 @@
         "summary": "sse",
         "description": "sse",
         "operationId": "sse",
-        "parameters": [
-          {
-            "name": "Content-Type",
-            "in": "header",
-            "required": true,
-            "schema": {
-              "enum": [
-                ""
-              ],
-              "type": "string"
-            }
+        "responses": {
+          "200": {
+            "description": "null"
           }
+        }
+      }
+    },
+    "/message": {
+      "post": {
+        "tags": [
+          "MCP"
         ],
+        "summary": "message",
+        "description": "message",
+        "operationId": "message",
         "responses": {
           "200": {
             "description": "null"
@@ -82,7 +56,7 @@
     "securitySchemes": {
       "apiKeyHeader": {
         "type": "apiKey",
-        "name": "api-key",
+        "name": "subscription-key",
         "in": "header"
       },
       "apiKeyQuery": {

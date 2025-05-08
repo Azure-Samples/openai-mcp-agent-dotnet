@@ -54,9 +54,16 @@ resource apimApi 'Microsoft.ApiManagement/service/apis@2024-06-01-preview' = {
     description: apiDescription
     serviceUrl: apiServiceUrl
     path: apiPath
+    protocols: [
+      'https'
+    ]
     subscriptionRequired: apiSubscriptionRequired
-    format: apiFormat
-    value: apiValue
+    subscriptionKeyParameterNames: {
+      header: 'subscription-key'
+      query: 'api-key'
+    }
+    // format: apiFormat
+    // value: apiValue
   }
 }
 
@@ -72,4 +79,28 @@ resource apimProductApi 'Microsoft.ApiManagement/service/products/apis@2024-06-0
   dependsOn: [
     apimApi
   ]
+}
+
+// Add SSE operation to the API
+resource mcpSseOperation 'Microsoft.ApiManagement/service/apis/operations@2024-06-01-preview' = {
+  name: 'mcp-sse'
+  parent: apimApi
+  properties: {
+    displayName: 'MCP SSE Endpoint'
+    method: 'GET'
+    urlTemplate: '/sse'
+    description: 'Server-Sent Events endpoint for MCP Server'
+  }
+}
+
+// Add Message operation to the API
+resource mcpMessageOperation 'Microsoft.ApiManagement/service/apis/operations@2024-06-01-preview' = {
+  name: 'mcp-message'
+  parent: apimApi
+  properties: {
+    displayName: 'MCP Message Endpoint'
+    method: 'POST'
+    urlTemplate: '/message'
+    description: 'Message endpoint for MCP Server'
+  }
 }
