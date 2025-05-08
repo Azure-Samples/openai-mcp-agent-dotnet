@@ -151,13 +151,6 @@ This app provides features like:
     Delete #1 from the to-do list.
     ```
 
-## TO-DO
-
-- [x] Add [Azure AI Project](https://github.com/Azure/azure-sdk-for-net/tree/main/sdk/cloudmachine) integration.
-- [ ] Add [Azure API Management](https://learn.microsoft.com/azure/api-management/credentials-overview) integration.
-- [x] Remove GitHub Models integration.
-- [ ] Add devcontainer settings.
-
 ## Resources
 
 TBD
