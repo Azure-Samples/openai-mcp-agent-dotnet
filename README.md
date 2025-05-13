@@ -178,6 +178,7 @@ This app provides features like:
 
 ## Resources
 
+- [.NET AI Template](https://devblogs.microsoft.com/dotnet/announcing-dotnet-ai-template-preview2/)
 - [Model Context Protocol (MCP) C# SDK](https://github.com/modelcontextprotocol/csharp-sdk)
 - [MCP .NET samples](https://github.com/microsoft/mcp-dotnet-samples)
 - [MCP Todo app in TypeScript](https://github.com/Azure-Samples/mcp-container-ts)
