@@ -176,6 +176,8 @@ This app provides features like:
     Delete #1 from the to-do list.
     ```
 
+   > **NOTE**: You might not be asked to login, if you've set the `USE_LOGIN` value to `false`.
+
 ## Resources
 
 - [.NET AI Template](https://devblogs.microsoft.com/dotnet/announcing-dotnet-ai-template-preview2/)
