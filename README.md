@@ -20,6 +20,7 @@ This app provides features like:
 - [Visual Studio Code](https://code.visualstudio.com/Download) + [C# Dev Kit](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.csdevkit)
 - [node.js](https://nodejs.org/en/download) LTS
 - [Docker Desktop](https://docs.docker.com/get-started/get-docker/) or [Podman Desktop](https://podman-desktop.io/downloads)
+- [Azure Subscription](https://azure.microsoft.com/free)
 
 ## Getting Started
 
@@ -84,6 +85,8 @@ This app provides features like:
 
 ### Run it in local containers
 
+1. Make sure that you're running either Docker Desktop or Podman Desktop on your local machine.
+
 1. Export user secrets to `.env`.
 
     ```bash
@@ -122,11 +125,23 @@ This app provides features like:
 
 ### Run it on Azure Container Apps
 
+1. Check that you have the necessary permissions:
+   - Your Azure account must have the `Microsoft.Authorization/roleAssignments/write` permission, such as [Role Based Access Control Administrator](https://learn.microsoft.com/azure/role-based-access-control/built-in-roles/privileged#role-based-access-control-administrator), [User Access Administrator](https://learn.microsoft.com/azure/role-based-access-control/built-in-roles/privileged#user-access-administrator), or [Owner](https://learn.microsoft.com/azure/role-based-access-control/built-in-roles/privileged#owner) at the subscription level.
+   - Your Azure account must also have the `Microsoft.Resources/deployments/write` permission at the subscription level.
+
 1. Login to Azure.
 
     ```bash
     azd auth login
     ```
+
+1. Initialize `azd`.
+
+    ```bash
+    azd init
+    ```
+
+   > **NOTE**: You'll be asked to enter an environment name, which will be the name of your Azure Resource Group.
 
 1. Deploy apps to Azure.
 
@@ -134,7 +149,15 @@ This app provides features like:
     azd up
     ```
 
-   > **NOTE**: During the deployment, you will be asked to enter the Azure Subscription, location and OpenAI connection string.
+   > **NOTE**:
+   >
+   > 1. By default, the MCP client app is protected by the ACA built-in auth feature. You can turn off this feature before running `azd up` by setting:
+   >
+   >    ```bash
+   >    azd env set USE_LOGIN false
+   >    ```
+   >
+   > 1. During the deployment, you will be asked to enter the Azure Subscription, location and OpenAI connection string.
    > The connection string should be in the format of `Endpoint={{AZURE_OPENAI_ENDPOINT}};Key={{AZURE_OPENAI_API_KEY}}`.
 
 1. In the terminal, get the client app URL deployed. It might look like:

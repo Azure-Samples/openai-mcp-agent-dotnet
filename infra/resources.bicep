@@ -13,6 +13,12 @@ param mcpTodoServerAppExists bool
 @description('Id of the user or app to assign application roles')
 param principalId string
 
+@description('Whether to use the built-in login feature for the application or not')
+param useLogin bool = true
+
+@description('Whether to use API Management or not')
+param useApiManagement bool = false
+
 @description('The connection string to OpenAI.')
 @secure()
 param openAIConnectionString string
@@ -33,7 +39,7 @@ module monitoring 'br/public:avm/ptn/azd/monitoring:0.1.0' = {
 }
 
 // Storage account
-module storageAccount 'br/public:avm/res/storage/storage-account:0.15.0' = {
+module storageAccount 'br/public:avm/res/storage/storage-account:0.15.0' = if (useLogin == true) {
   name: 'storageAccount'
   params: {
     name: '${abbrs.storageStorageAccounts}${resourceToken}'
@@ -53,63 +59,63 @@ module storageAccount 'br/public:avm/res/storage/storage-account:0.15.0' = {
 }
 
 // API Management
-// module apiManagement 'br/public:avm/res/api-management/service:0.9.1' = {
-//   name: 'apimanagement'
-//   params: {
-//     name: '${abbrs.apiManagementService}${resourceToken}'
-//     location: location
-//     tags: tags
-//     publisherName: 'MCP Todo Agent'
-//     publisherEmail: 'mcp-todo@contoso.com'
-//     sku: 'BasicV2'
-//     skuCapacity: 1
-//     managedIdentities: {
-//       systemAssigned: false
-//       userAssignedResourceIds: [
-//         mcpTodoClientAppIdentity.outputs.resourceId
-//       ]
-//     }
-//   }
-// }
+module apiManagement 'br/public:avm/res/api-management/service:0.9.1' = if (useApiManagement == true) {
+  name: 'apimanagement'
+  params: {
+    name: '${abbrs.apiManagementService}${resourceToken}'
+    location: location
+    tags: tags
+    publisherName: 'MCP Todo Agent'
+    publisherEmail: 'mcp-todo@contoso.com'
+    sku: 'BasicV2'
+    skuCapacity: 1
+    managedIdentities: {
+      systemAssigned: false
+      userAssignedResourceIds: [
+        mcpTodoClientAppIdentity.outputs.resourceId
+      ]
+    }
+  }
+}
 
-// module apimProduct './modules/apim-product.bicep' = {
-//   name: 'apimanagement-product'
-//   params: {
-//     name: apiManagement.outputs.name
-//     productName: 'default'
-//     productDisplayName: 'default'
-//     productDescription: 'Default product'
-//     productSubscriptionRequired: false
-//   }
-// }
+module apimProduct './modules/apim-product.bicep' = if (useApiManagement == true) {
+  name: 'apimanagement-product'
+  params: {
+    name: apiManagement.outputs.name
+    productName: 'default'
+    productDisplayName: 'default'
+    productDescription: 'Default product'
+    productSubscriptionRequired: false
+  }
+}
 
-// module apimSubscription './modules/apim-subscription.bicep' = {
-//   name: 'apimanagement-subscription'
-//   params: {
-//     name: apiManagement.outputs.name
-//     productName: apimProduct.outputs.name
-//     subscriptionName: 'default'
-//     subscriptionDisplayName: 'Default subscription'
-//   }
-// }
+module apimSubscription './modules/apim-subscription.bicep' = if (useApiManagement == true) {
+  name: 'apimanagement-subscription'
+  params: {
+    name: apiManagement.outputs.name
+    productName: apimProduct.outputs.name
+    subscriptionName: 'default'
+    subscriptionDisplayName: 'Default subscription'
+  }
+}
 
-// module apimApi './modules/apim-api.bicep' = {
-//   name: 'apimanagement-api'
-//   params: {
-//     name: apiManagement.outputs.name
-//     apiName: 'mcp-server'
-//     apiDisplayName: 'MCP Server'
-//     apiDescription: 'API for MCP Server'
-//     apiServiceUrl: 'https://${mcpTodoServerApp.outputs.fqdn}'
-//     apiPath: 'mcp-server'
-//     apiSubscriptionRequired: false
-//     apiFormat: 'openapi+json'
-//     apiValue: loadTextContent('./apis/openapi.json')
-//   }
-//   dependsOn: [
-//     apimProduct
-//   ]
-// }
+module apimApi './modules/apim-api.bicep' = if (useApiManagement == true) {
+  name: 'apimanagement-api'
+  params: {
+    name: apiManagement.outputs.name
+    apiName: 'mcp-server'
+    apiDisplayName: 'MCP Server'
+    apiDescription: 'API for MCP Server'
+    apiServiceUrl: 'https://${mcpTodoServerApp.outputs.fqdn}'
+    apiPath: 'mcp-server'
+    apiSubscriptionRequired: false
+    apiFormat: 'openapi+json'
+    apiValue: loadTextContent('./apis/openapi.json')
+  }
+  dependsOn: [
+    apimProduct
+  ]
+}
 
 // Container registry
 module containerRegistry 'br/public:avm/res/container-registry/registry:0.6.0' = {
@@ -157,7 +163,7 @@ module mcpTodoServerAppIdentity 'br/public:avm/res/managed-identity/user-assigne
   }
 }
 
-module mcpTodoServerAppIdentityRoleAssignment './modules/role-assignment.bicep' = {
+module mcpTodoServerAppIdentityRoleAssignment './modules/role-assignment.bicep' = if (useLogin == true) {
   name: 'mcpTodoServerAppIdentityRoleAssignment'
   params: {
     managedIdentityName: mcpTodoServerAppIdentity.outputs.name
@@ -236,7 +242,7 @@ module mcpTodoClientAppIdentity 'br/public:avm/res/managed-identity/user-assigne
   }
 }
 
-module mcpTodoClientAppIdentityRoleAssignment './modules/role-assignment.bicep' = {
+module mcpTodoClientAppIdentityRoleAssignment './modules/role-assignment.bicep' = if (useLogin == true) {
   name: 'mcpTodoClientAppIdentityRoleAssignment'
   params: {
     managedIdentityName: mcpTodoClientAppIdentity.outputs.name
@@ -292,7 +298,7 @@ module mcpTodoClientApp 'br/public:avm/res/app/container-app:0.16.0' = {
           }
           {
             name: 'McpServers__TodoList'
-            value: 'https://${mcpTodoServerApp.outputs.fqdn}'
+            value: useApiManagement ? 'https://${apiManagement.outputs.name}.azure-api.net' : 'https://${mcpTodoServerApp.outputs.fqdn}'
           }
           {
             name: 'ConnectionStrings__OpenAI'
@@ -322,7 +328,7 @@ module mcpTodoClientApp 'br/public:avm/res/app/container-app:0.16.0' = {
 // EasyAuth
 var issuer = '${environment().authentication.loginEndpoint}${tenant().tenantId}/v2.0'
 
-module appRegistration './modules/app-registration.bicep' = {
+module appRegistration './modules/app-registration.bicep' = if (useLogin == true) {
   name: 'appRegistration'
   params: {
     appName: 'spn-${environmentName}'
@@ -332,7 +338,7 @@ module appRegistration './modules/app-registration.bicep' = {
   }
 }
 
-module mcpTodoClientAppAuthConfig './modules/containerapps-authconfigs.bicep' = {
+module mcpTodoClientAppAuthConfig './modules/containerapps-authconfigs.bicep' = if (useLogin == true) {
   name: 'mcpTodoClientAppAuthConfig'
   params: {
     containerAppName: mcpTodoClientApp.outputs.name
@@ -344,7 +350,7 @@ module mcpTodoClientAppAuthConfig './modules/containerapps-authconfigs.bicep' = 
   }
 }
 
-output AZURE_PRINCIPAL_ID string = appRegistration.outputs.appId
+output AZURE_PRINCIPAL_ID string = useLogin ? appRegistration.outputs.appId : ''
 
 output AZURE_CONTAINER_REGISTRY_ENDPOINT string = containerRegistry.outputs.loginServer
 

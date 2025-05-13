@@ -16,6 +16,12 @@
       },
       "principalId": {
         "value": "${AZURE_PRINCIPAL_ID}"
+      },
+      "useLogin": {
+        "value": "${USE_LOGIN=true}"
+      },
+      "useApiManagement": {
+        "value": "${USE_API_MANAGEMENT=false}"
       }
     }
 }
