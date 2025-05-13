@@ -24,6 +24,8 @@ This app provides features like:
 
 ## Getting Started
 
+You can now use GitHub Codespaces to run this sample app (takes several minutes to open it)! 👉 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/Azure-Samples/openai-mcp-agent-dotnet).
+
 ### Run it locally
 
 1. Clone this repo.
