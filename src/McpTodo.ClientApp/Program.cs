@@ -8,8 +8,7 @@ using McpTodo.ClientApp.Extensions;
 using Microsoft.Extensions.AI;
 
 using ModelContextProtocol.Client;
-using ModelContextProtocol.Protocol.Transport;
-using ModelContextProtocol.Protocol.Types;
+using ModelContextProtocol.Protocol;
 
 using OpenAI;
 
