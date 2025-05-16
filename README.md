@@ -32,13 +32,38 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
 - If you use Azure AI Foundry, make sure you have the [GPT-4o models deployed](https://learn.microsoft.com/azure/ai-foundry/how-to/deploy-models-openai) deployed.
 - As a default, the deployed model name is `gpt-4o`.
 
-### Get the sample app
+### Run it on Azure
 
-1. Clone this repo.
+1. Check that you have the necessary permissions:
+   - Your Azure account must have the `Microsoft.Authorization/roleAssignments/write` permission, such as [Role Based Access Control Administrator](https://learn.microsoft.com/azure/role-based-access-control/built-in-roles/privileged#role-based-access-control-administrator), [User Access Administrator](https://learn.microsoft.com/azure/role-based-access-control/built-in-roles/privileged#user-access-administrator), or [Owner](https://learn.microsoft.com/azure/role-based-access-control/built-in-roles/privileged#owner) at the subscription level.
+   - Your Azure account must also have the `Microsoft.Resources/deployments/write` permission at the subscription level.
+
+1. Login to Azure.
 
     ```bash
-    git clone https://github.com/Azure-Samples/openai-mcp-agent-dotnet.git
+    azd auth login
     ```
+
+1. Create a directory for the app.
+
+    ```bash
+    # zsh/bash
+    mkdir -p openai-mcp-agent-dotnet
+    ```
+
+    ```powershell
+    # PowerShell
+    New-Item -ItemType Directory -Path openai-mcp-agent-dotnet -Force
+    ```
+
+1. Initialize `azd`.
+
+    ```bash
+    cd openai-mcp-agent-dotnet
+    azd init -t openai-mcp-agent-dotnet
+    ```
+
+   > **NOTE**: You'll be asked to enter an environment name, which will be the name of your Azure Resource Group.
 
 1. Clone the MCP server.
 
@@ -57,26 +82,6 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
       }
     }
     ```
-
-### Run it on Azure
-
-1. Check that you have the necessary permissions:
-   - Your Azure account must have the `Microsoft.Authorization/roleAssignments/write` permission, such as [Role Based Access Control Administrator](https://learn.microsoft.com/azure/role-based-access-control/built-in-roles/privileged#role-based-access-control-administrator), [User Access Administrator](https://learn.microsoft.com/azure/role-based-access-control/built-in-roles/privileged#user-access-administrator), or [Owner](https://learn.microsoft.com/azure/role-based-access-control/built-in-roles/privileged#owner) at the subscription level.
-   - Your Azure account must also have the `Microsoft.Resources/deployments/write` permission at the subscription level.
-
-1. Login to Azure.
-
-    ```bash
-    azd auth login
-    ```
-
-1. Initialize `azd`.
-
-    ```bash
-    azd init
-    ```
-
-   > **NOTE**: You'll be asked to enter an environment name, which will be the name of your Azure Resource Group.
 
 1. Deploy apps to Azure.
 
@@ -115,6 +120,18 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
    > **NOTE**: You might not be asked to login, if you've set the `USE_LOGIN` value to `false`.
 
 ### Run it locally
+
+1. Make sure you're in the `openai-mcp-agent-dotnet` directory.
+1. Make sure that your deployed model name is `gpt-4o`. If your deployed model is different, update `src/McpTodo.ClientApp/appsettings.json`.
+
+    ```jsonc
+    {
+      "OpenAI": {
+        // Make sure this is the right deployment name.
+        "DeploymentName": "gpt-4o"
+      }
+    }
+    ```
 
 1. Add Azure OpenAI API Key.
 
@@ -164,7 +181,7 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
 ### Run it in local containers
 
 1. Make sure that you're running either Docker Desktop or Podman Desktop on your local machine.
-
+1. Make sure you're in the `openai-mcp-agent-dotnet` directory.
 1. Export user secrets to `.env`.
 
     ```bash
