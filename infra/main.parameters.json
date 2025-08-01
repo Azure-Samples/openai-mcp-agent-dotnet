@@ -22,6 +22,9 @@
       },
       "useApiManagement": {
         "value": "${USE_API_MANAGEMENT=false}"
+      },
+      "mcpServerIngressPort": {
+        "value": "${MCP_SERVER_INGRESS_PORT=3000}"
       }
     }
 }

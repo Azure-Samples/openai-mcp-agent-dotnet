@@ -47,17 +47,7 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
 - If you use Azure AI Foundry, make sure you have the [GPT-4o models deployed](https://learn.microsoft.com/azure/ai-foundry/how-to/deploy-models-openai) deployed.
 - As a default, the deployed model name is `gpt-4o`.
 
-### Run it on Azure
-
-1. Check that you have the necessary permissions:
-   - Your Azure account must have the `Microsoft.Authorization/roleAssignments/write` permission, such as [Role Based Access Control Administrator](https://learn.microsoft.com/azure/role-based-access-control/built-in-roles/privileged#role-based-access-control-administrator), [User Access Administrator](https://learn.microsoft.com/azure/role-based-access-control/built-in-roles/privileged#user-access-administrator), or [Owner](https://learn.microsoft.com/azure/role-based-access-control/built-in-roles/privileged#owner) at the subscription level.
-   - Your Azure account must also have the `Microsoft.Resources/deployments/write` permission at the subscription level.
-
-1. Login to Azure.
-
-    ```bash
-    azd auth login
-    ```
+### Get AI Agent App
 
 1. Create a directory for the app.
 
@@ -80,12 +70,6 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
 
    > **NOTE**: You'll be asked to enter an environment name, which will be the name of your Azure Resource Group.
 
-1. Clone the MCP server.
-
-    ```bash
-    git clone https://github.com/Azure-Samples/mcp-container-ts.git ./src/McpTodo.ServerApp
-    ```
-
 1. Make sure that your deployed model name is `gpt-4o`. If your deployed model is different, update `src/McpTodo.ClientApp/appsettings.json`.
 
     ```jsonc
@@ -95,6 +79,52 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
         "DeploymentName": "gpt-4o"
       }
     }
+    ```
+
+### Get MCP Server App
+
+You can choose the MCP server written either in TypeScript or .NET.
+
+#### TypeScript MCP Server
+
+1. clone the MCP server.
+
+    ```bash
+    git clone https://github.com/Azure-Samples/mcp-container-ts.git ./src/McpTodo.ServerApp
+    ```
+
+#### .NET MCP Server
+
+1. Run the following command.
+
+    ```bash
+    # zsh/bash
+    mv ./azure.yaml ./azure.yaml.typescript
+    mv ./azure.yaml.dotnet ./azure.yaml
+    ```
+
+    ```powershell
+    # PowerShell
+    Rename-Item -Path ./azure.yaml -NewName ./azure.yaml.typescript
+    Rename-Item -Path ./azure.yaml.dotnet -NewName ./azure.yaml
+    ```
+
+1. Run the following command.
+
+    ```bash
+    azd env set MCP_SERVER_INGRESS_PORT 8080
+    ```
+
+### Run on Azure
+
+1. Check that you have the necessary permissions:
+   - Your Azure account must have the `Microsoft.Authorization/roleAssignments/write` permission, such as [Role Based Access Control Administrator](https://learn.microsoft.com/azure/role-based-access-control/built-in-roles/privileged#role-based-access-control-administrator), [User Access Administrator](https://learn.microsoft.com/azure/role-based-access-control/built-in-roles/privileged#user-access-administrator), or [Owner](https://learn.microsoft.com/azure/role-based-access-control/built-in-roles/privileged#owner) at the subscription level.
+   - Your Azure account must also have the `Microsoft.Resources/deployments/write` permission at the subscription level.
+
+1. Login to Azure.
+
+    ```bash
+    azd auth login
     ```
 
 1. Deploy apps to Azure.
@@ -112,7 +142,7 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
    >    ```
    >
    > 1. During the deployment, you will be asked to enter the Azure Subscription, location and OpenAI connection string. The connection string should be in the format of `Endpoint={{AZURE_OPENAI_ENDPOINT}};Key={{AZURE_OPENAI_API_KEY}}`.
-   > 
+   >
    > 1. You can add GitHub PAT in the same format above to use GitHub Models like `Endpoint=https://models.inference.ai.azure.com;Key={{GITHUB_PAT}}`.
 
 1. In the terminal, get the client app URL deployed. It might look like:
@@ -133,7 +163,13 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
 
    > **NOTE**: You might not be asked to login, if you've set the `USE_LOGIN` value to `false`.
 
-### Run it locally
+1. Clean up all the resources deployed.
+
+    ```bash
+    azd down --force --prune
+    ```
+
+### Run locally
 
 1. Make sure you're in the `openai-mcp-agent-dotnet` directory.
 1. Add Azure OpenAI API Key.
@@ -144,7 +180,7 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
 
    > **NOTE**: You can add GitHub PAT in the same format above to use GitHub Models like `Endpoint=https://models.inference.ai.azure.com;Key={{GITHUB_PAT}}`.
 
-1. Install npm packages.
+1. To use TypeScript version of the MCP server, install npm packages.
 
     ```bash
     pushd ./src/McpTodo.ServerApp
@@ -152,17 +188,25 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
     popd
     ```
 
+   But to use .NET version of the MCP server, skip this step.
+
 1. Install NuGet packages.
 
     ```bash
     dotnet restore && dotnet build
     ```
 
-1. Run the host app.
+1. Run the MCP server app either TypeScript server or .NET one.
 
     ```bash
+    # TypeScript MCP server
     cd ./src/McpTodo.ServerApp
     npm start
+    ```
+
+    ```bash
+    # .NET MCP server
+    docker run -i --rm -d -p 3000:8080 ghcr.io/microsoft/mcp-dotnet-samples/todo-list:http
     ```
 
 1. Run the client app in another terminal.
@@ -181,7 +225,14 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
     Delete #1 from the to-do list.
     ```
 
-### Run it in local containers
+1. Type `CTRL`+`C` to stop the agent app.
+1. Stop the container, if .NET MCP server is running.
+
+    ```bash
+    docker stop $(docker ps -q --filter ancestor=ghcr.io/microsoft/mcp-dotnet-samples/todo-list:http)
+    ```
+
+### Run in local containers
 
 1. Make sure that you're running either Docker Desktop or Podman Desktop on your local machine.
 1. Make sure you're in the `openai-mcp-agent-dotnet` directory.
@@ -199,16 +250,24 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
         -replace "ConnectionStrings:openai", "ConnectionStrings__openai" | Out-File ".env" -Force
     ```
 
+1. To use TypeScript version of the MCP server, skip this step. But to use .NET version of the MCP server, run the following command.
+
+    ```bash
+    # zsh/bash
+    mv ./compose.yaml ./compose.yaml.typescript
+    mv ./compose.yaml.dotnet ./compose.yaml
+    ```
+
+    ```powershell
+    # PowerShell
+    Rename-Item -Path ./compose.yaml -NewName ./compose.yaml.typescript
+    Rename-Item -Path ./compose.yaml.dotnet -NewName ./compose.yaml
+    ```
+
 1. Run both apps in containers.
 
     ```bash
-    # Docker
     docker compose up --build
-    ```
-
-    ```bash
-    # Podman
-    podman compose up --build
     ```
 
 1. Navigate to `http://localhost:8080` and enter prompts like:
@@ -219,6 +278,13 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
     Give me list of to do.
     Mark #1 as completed.
     Delete #1 from the to-do list.
+    ```
+
+1. Type `CTRL`+`C` to stop all containers.
+1. Delete all running containers.
+
+    ```bash
+    docker compose down
     ```
 
 ## Resources

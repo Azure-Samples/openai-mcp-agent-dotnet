@@ -25,6 +25,9 @@ param useApiManagement bool = false
 @secure()
 param openAIConnectionString string
 
+param mcpServerIngressPort int = 3000
+param mcpClientIngressPort int = 8080
+
 // Tags that should be applied to all resources.
 // 
 // Note that 'azd-service-name' tags should be applied separately to service host resources.
@@ -54,6 +57,8 @@ module resources 'resources.bicep' = {
     useLogin: useLogin
     useApiManagement: useApiManagement
     openAIConnectionString: openAIConnectionString
+    mcpServerIngressPort: mcpServerIngressPort
+    mcpClientIngressPort: mcpClientIngressPort
   }
 }
 

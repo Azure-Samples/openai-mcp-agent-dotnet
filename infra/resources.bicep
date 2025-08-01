@@ -23,6 +23,9 @@ param useApiManagement bool = false
 @secure()
 param openAIConnectionString string
 
+param mcpServerIngressPort int = 3000
+param mcpClientIngressPort int = 8080
+
 var abbrs = loadJsonContent('./abbreviations.json')
 var resourceToken = uniqueString(subscription().id, resourceGroup().id, location)
 
@@ -184,7 +187,7 @@ module mcpTodoServerApp 'br/public:avm/res/app/container-app:0.16.0' = {
   name: 'mcpTodoServerApp'
   params: {
     name: 'mcptodo-serverapp'
-    ingressTargetPort: 3000
+    ingressTargetPort: mcpServerIngressPort
     ingressExternal: false
     scaleSettings: {
       minReplicas: 1
@@ -211,7 +214,7 @@ module mcpTodoServerApp 'br/public:avm/res/app/container-app:0.16.0' = {
           }
           {
             name: 'PORT'
-            value: '3000'
+            value: '${mcpServerIngressPort}'
           }
         ]
       }
@@ -263,7 +266,7 @@ module mcpTodoClientApp 'br/public:avm/res/app/container-app:0.16.0' = {
   name: 'mcpTodoClientApp'
   params: {
     name: 'mcptodo-clientapp'
-    ingressTargetPort: 8080
+    ingressTargetPort: mcpClientIngressPort
     ingressExternal: true
     scaleSettings: {
       minReplicas: 1
@@ -294,7 +297,7 @@ module mcpTodoClientApp 'br/public:avm/res/app/container-app:0.16.0' = {
           }
           {
             name: 'PORT'
-            value: '8080'
+            value: '${mcpClientIngressPort}'
           }
           {
             name: 'McpServers__TodoList'
