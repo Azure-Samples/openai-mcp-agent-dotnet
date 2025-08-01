@@ -141,7 +141,7 @@ You can choose the MCP server written either in TypeScript or .NET.
    >    azd env set USE_LOGIN false
    >    ```
    >
-   > 1. During the deployment, you will be asked to enter the Azure Subscription, location and OpenAI connection string. The connection string should be in the format of `Endpoint={{AZURE_OPENAI_ENDPOINT}};Key={{AZURE_OPENAI_API_KEY}}`.
+   > 1. During the deployment, you will be asked to enter the Azure Subscription, location and OpenAI connection string. The connection string should be in the format of `Endpoint={{AZURE_OPENAI_ENDPOINT}};Key={{AZURE_OPENAI_API_KEY}}`. The Azure OpenAI API endpoint should look like `https://<location>.api.cognitive.microsoft.com/`.
    >
    > 1. You can add GitHub PAT in the same format above to use GitHub Models like `Endpoint=https://models.inference.ai.azure.com;Key={{GITHUB_PAT}}`.
 
