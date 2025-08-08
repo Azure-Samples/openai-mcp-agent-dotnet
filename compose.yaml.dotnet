@@ -7,9 +7,11 @@ networks:
 services:
   todo-server:
     container_name: todo-server
-    image: ghcr.io/microsoft/mcp-dotnet-samples/todo-list:http
+    image: ghcr.io/microsoft/mcp-dotnet-samples/todo-list:latest
     ports:
       - 3000:8080
+    environment:
+      - UseHttp=true
     networks:
       - mcp-todo
 

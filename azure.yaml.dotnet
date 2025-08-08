@@ -15,5 +15,5 @@ services:
       context: ../../
       remoteBuild: true
   mcptodo-serverapp:
-    image: ghcr.io/microsoft/mcp-dotnet-samples/todo-list:http
+    image: ghcr.io/microsoft/mcp-dotnet-samples/todo-list:latest
     host: containerapp

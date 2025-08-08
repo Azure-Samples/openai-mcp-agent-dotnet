@@ -2,8 +2,8 @@ using System.ClientModel;
 
 using Azure.AI.OpenAI;
 
+using McpTodo.ClientApp;
 using McpTodo.ClientApp.Components;
-using McpTodo.ClientApp.Extensions;
 
 using Microsoft.Extensions.AI;
 
@@ -32,7 +32,7 @@ var openAIOptions = new OpenAIClientOptions()
     Endpoint = new Uri(endpoint),
 };
 
-var openAIClient = endpoint.TrimEnd('/').Equals("https://models.inference.ai.azure.com")
+var openAIClient = Constants.GitHubModelEndpoints.Contains(endpoint.TrimEnd('/'))
                    ? new OpenAIClient(credential, openAIOptions)
                    : new AzureOpenAIClient(new Uri(endpoint), credential);
 var chatClient = openAIClient.GetChatClient(config["OpenAI:DeploymentName"]).AsIChatClient();

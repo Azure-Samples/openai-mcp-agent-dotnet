@@ -44,8 +44,8 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
 ### Get Azure AI Foundry or GitHub Models
 
 - To run this app, you should have either [Azure AI Foundry](https://learn.microsoft.com/azure/ai-foundry/what-is-azure-ai-foundry) instance or [GitHub Models](https://github.com/marketplace?type=models).
-- If you use Azure AI Foundry, make sure you have the [GPT-4o models deployed](https://learn.microsoft.com/azure/ai-foundry/how-to/deploy-models-openai) deployed.
-- As a default, the deployed model name is `gpt-4o`.
+- If you use Azure AI Foundry, make sure you have the [GPT-5-mini models deployed](https://learn.microsoft.com/azure/ai-foundry/how-to/deploy-models-openai) deployed.
+- As a default, the deployed model name is `gpt-5-mini`.
 
 ### Get AI Agent App
 
@@ -70,13 +70,13 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
 
    > **NOTE**: You'll be asked to enter an environment name, which will be the name of your Azure Resource Group.
 
-1. Make sure that your deployed model name is `gpt-4o`. If your deployed model is different, update `src/McpTodo.ClientApp/appsettings.json`.
+1. Make sure that your deployed model name is `gpt-5-mini`. If your deployed model is different, update `src/McpTodo.ClientApp/appsettings.json`.
 
     ```jsonc
     {
       "OpenAI": {
         // Make sure this is the right deployment name.
-        "DeploymentName": "gpt-4o"
+        "DeploymentName": "gpt-5-mini"
       }
     }
     ```
