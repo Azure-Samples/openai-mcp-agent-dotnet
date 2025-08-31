@@ -68,7 +68,7 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
     azd init -t openai-mcp-agent-dotnet
     ```
 
-   > **NOTE**: You'll be asked to enter an environment name, which will be the name of your Azure Resource Group.
+   > **NOTE**: You'll be asked to enter an environment name, which will be the name of your Azure Resource Group. For example, the environment name might be `openai-mcp-agent`.
 
 1. Make sure that your deployed model name is `gpt-5-mini`. If your deployed model is different, update `src/McpTodo.ClientApp/appsettings.json`.
 
@@ -83,36 +83,35 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
 
 ### Get MCP Server App
 
-You can choose the MCP server written either in TypeScript or .NET.
-
-#### TypeScript MCP Server
-
-1. clone the MCP server.
+1. Clone the MCP server.
 
     ```bash
     git clone https://github.com/Azure-Samples/mcp-container-ts.git ./src/McpTodo.ServerApp
     ```
 
-#### .NET MCP Server
-
-1. Run the following command.
+1. Set JWT token.
 
     ```bash
-    # zsh/bash
-    mv ./azure.yaml ./azure.yaml.typescript
-    mv ./azure.yaml.dotnet ./azure.yaml
+    # bash/zsh
+    ./scripts/set-jwttoken.sh
     ```
 
     ```powershell
     # PowerShell
-    Rename-Item -Path ./azure.yaml -NewName ./azure.yaml.typescript
-    Rename-Item -Path ./azure.yaml.dotnet -NewName ./azure.yaml
+    ./scripts/Set-JwtToken.ps1
     ```
 
-1. Run the following command.
+1. Get the JWT token for Azure deployment.
 
     ```bash
-    azd env set MCP_SERVER_INGRESS_PORT 8080
+    # bash/zsh
+    ```
+
+    ```powershell
+    # PowerShell
+    $($(dotnet user-secrets `
+        --project ./src/McpTodo.ClientApp list --json).Replace("//BEGIN", "").Replace("//END", "") `
+        | ConvertFrom-Json)."McpServers:JWT:Token"
     ```
 
 ### Run on Azure
@@ -125,6 +124,18 @@ You can choose the MCP server written either in TypeScript or .NET.
 
     ```bash
     azd auth login
+    ```
+
+1. Add JWT token to azd environment.
+
+    ```bash
+    # bash/zsh
+    ```
+
+    ```powershell
+    # PowerShell
+    $dotenv = Get-Content ./src/McpTodo.ServerApp/.env
+    $dotenv | Add-Content -Path ./.azure/$(azd env get-value AZURE_ENV_NAME)/.env -Encoding utf8 -Force
     ```
 
 1. Deploy apps to Azure.
@@ -141,8 +152,8 @@ You can choose the MCP server written either in TypeScript or .NET.
    >    azd env set USE_LOGIN false
    >    ```
    >
-   > 1. During the deployment, you will be asked to enter the Azure Subscription, location and OpenAI connection string. The connection string should be in the format of `Endpoint={{AZURE_OPENAI_ENDPOINT}};Key={{AZURE_OPENAI_API_KEY}}`. The Azure OpenAI API endpoint should look like `https://<location>.api.cognitive.microsoft.com/`.
-   >
+   > 1. During the deployment, you will be asked to enter the Azure Subscription, location and OpenAI connection string.
+   > 1. The connection string should be in the format of `Endpoint={{AZURE_OPENAI_ENDPOINT}};Key={{AZURE_OPENAI_API_KEY}}`. The Azure OpenAI API endpoint should look like `https://<location>.api.cognitive.microsoft.com/`.
    > 1. You can add GitHub PAT in the same format above to use GitHub Models like `Endpoint=https://models.inference.ai.azure.com;Key={{GITHUB_PAT}}`.
 
 1. In the terminal, get the client app URL deployed. It might look like:
@@ -180,33 +191,11 @@ You can choose the MCP server written either in TypeScript or .NET.
 
    > **NOTE**: You can add GitHub PAT in the same format above to use GitHub Models like `Endpoint=https://models.inference.ai.azure.com;Key={{GITHUB_PAT}}`.
 
-1. To use TypeScript version of the MCP server, install npm packages.
+1. Run the MCP server app.
 
     ```bash
-    pushd ./src/McpTodo.ServerApp
-    npm install
-    popd
-    ```
-
-   But to use .NET version of the MCP server, skip this step.
-
-1. Install NuGet packages.
-
-    ```bash
-    dotnet restore && dotnet build
-    ```
-
-1. Run the MCP server app either TypeScript server or .NET one.
-
-    ```bash
-    # TypeScript MCP server
     cd ./src/McpTodo.ServerApp
-    npm start
-    ```
-
-    ```bash
-    # .NET MCP server
-    docker run -i --rm -d -p 3000:8080 ghcr.io/microsoft/mcp-dotnet-samples/todo-list:http
+    npm run dev
     ```
 
 1. Run the client app in another terminal.
@@ -226,11 +215,6 @@ You can choose the MCP server written either in TypeScript or .NET.
     ```
 
 1. Type `CTRL`+`C` to stop the agent app.
-1. Stop the container, if .NET MCP server is running.
-
-    ```bash
-    docker stop $(docker ps -q --filter ancestor=ghcr.io/microsoft/mcp-dotnet-samples/todo-list:http)
-    ```
 
 ### Run in local containers
 
@@ -241,27 +225,15 @@ You can choose the MCP server written either in TypeScript or .NET.
     ```bash
     # bash/zsh
     dotnet user-secrets list --project src/McpTodo.ClientApp \
-        | sed 's/ConnectionStrings:openai/ConnectionStrings__openai/' > .env
+        | sed 's/ConnectionStrings:openai/ConnectionStrings__openai/' \
+        | sed 's/McpServers:JWT:Token/McpServers__JWT__Token/' > .env
     ```
 
     ```bash
     # PowerShell
-    (dotnet user-secrets list --project src/McpTodo.ClientApp) `
-        -replace "ConnectionStrings:openai", "ConnectionStrings__openai" | Out-File ".env" -Force
-    ```
-
-1. To use TypeScript version of the MCP server, skip this step. But to use .NET version of the MCP server, run the following command.
-
-    ```bash
-    # zsh/bash
-    mv ./compose.yaml ./compose.yaml.typescript
-    mv ./compose.yaml.dotnet ./compose.yaml
-    ```
-
-    ```powershell
-    # PowerShell
-    Rename-Item -Path ./compose.yaml -NewName ./compose.yaml.typescript
-    Rename-Item -Path ./compose.yaml.dotnet -NewName ./compose.yaml
+    $($(dotnet user-secrets list --project src/McpTodo.ClientApp) `
+        -replace "ConnectionStrings:openai", "ConnectionStrings__openai") `
+        -replace "McpServers:JWT:Token", "McpServers__JWT__Token" | Out-File ".env" -Force
     ```
 
 1. Run both apps in containers.

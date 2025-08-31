@@ -25,6 +25,22 @@ param useApiManagement bool = false
 @secure()
 param openAIConnectionString string
 
+@description('The JWT audience for auth.')
+@secure()
+param jwtAudience string
+@description('The JWT issuer for auth.')
+@secure()
+param jwtIssuer string
+@description('The JWT expiry for auth.')
+@secure()
+param jwtExpiry string
+@description('The JWT secret for auth.')
+@secure()
+param jwtSecret string
+@description('The JWT token for auth.')
+@secure()
+param jwtToken string
+
 param mcpServerIngressPort int = 3000
 param mcpClientIngressPort int = 8080
 
@@ -57,6 +73,11 @@ module resources 'resources.bicep' = {
     useLogin: useLogin
     useApiManagement: useApiManagement
     openAIConnectionString: openAIConnectionString
+    jwtAudience: jwtAudience
+    jwtIssuer: jwtIssuer
+    jwtExpiry: jwtExpiry
+    jwtSecret: jwtSecret
+    jwtToken: jwtToken
     mcpServerIngressPort: mcpServerIngressPort
     mcpClientIngressPort: mcpClientIngressPort
   }

@@ -51,6 +51,10 @@ builder.Services.AddSingleton<IMcpClient>(sp =>
     var clientTransportOptions = new SseClientTransportOptions()
     {
         Endpoint = new Uri($"{uri.AbsoluteUri.TrimEnd('/')}/mcp"),
+        AdditionalHeaders = new Dictionary<string, string>
+        {
+            { "Authorization", $"Bearer {config["McpServers:JWT:Token"]!}" }
+        }
     };
     var clientTransport = new SseClientTransport(clientTransportOptions, loggerFactory);
 

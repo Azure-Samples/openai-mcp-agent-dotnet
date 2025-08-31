@@ -23,6 +23,22 @@ param useApiManagement bool = false
 @secure()
 param openAIConnectionString string
 
+@description('The JWT audience for auth.')
+@secure()
+param jwtAudience string
+@description('The JWT issuer for auth.')
+@secure()
+param jwtIssuer string
+@description('The JWT expiry for auth.')
+@secure()
+param jwtExpiry string
+@description('The JWT secret for auth.')
+@secure()
+param jwtSecret string
+@description('The JWT token for auth.')
+@secure()
+param jwtToken string
+
 param mcpServerIngressPort int = 3000
 param mcpClientIngressPort int = 8080
 
@@ -194,6 +210,26 @@ module mcpTodoServerApp 'br/public:avm/res/app/container-app:0.16.0' = {
       maxReplicas: 10
     }
     secrets: [
+      {
+        name: 'jwt-audience'
+        value: jwtAudience
+      }
+      {
+        name: 'jwt-issuer'
+        value: jwtIssuer
+      }
+      {
+        name: 'jwt-expiry'
+        value: jwtExpiry
+      }
+      {
+        name: 'jwt-secret'
+        value: jwtSecret
+      }
+      {
+        name: 'jwt-token'
+        value: jwtToken
+      }
     ]
     containers: [
       {
@@ -216,8 +252,27 @@ module mcpTodoServerApp 'br/public:avm/res/app/container-app:0.16.0' = {
             name: 'PORT'
             value: '${mcpServerIngressPort}'
           }
+          {
+            name: 'JWT_AUDIENCE'
+            secretRef: 'jwt-audience'
+          }
+          {
+            name: 'JWT_ISSUER'
+            secretRef: 'jwt-issuer'
+          }
+          {
+            name: 'JWT_EXPIRY'
+            secretRef: 'jwt-expiry'
+          }
+          {
+            name: 'JWT_SECRET'
+            secretRef: 'jwt-secret'
+          }
+          {
+            name: 'JWT_TOKEN'
+            secretRef: 'jwt-token'
+          }
         ]
-        args: mcpServerIngressPort == 8080 ? [ '--http' ] : []
       }
     ]
     managedIdentities: {
@@ -278,6 +333,10 @@ module mcpTodoClientApp 'br/public:avm/res/app/container-app:0.16.0' = {
         name: 'connectionstrings-openai'
         value: openAIConnectionString
       }
+      {
+        name: 'jwt-token'
+        value: jwtToken
+      }
     ]
     containers: [
       {
@@ -307,6 +366,10 @@ module mcpTodoClientApp 'br/public:avm/res/app/container-app:0.16.0' = {
           {
             name: 'ConnectionStrings__OpenAI'
             secretRef: 'connectionstrings-openai'
+          }
+          {
+            name: 'McpServers__JWT__Token'
+            secretRef: 'jwt-token'
           }
         ]
       }
