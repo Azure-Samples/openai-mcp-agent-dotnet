@@ -101,19 +101,6 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
     ./scripts/Set-JwtToken.ps1
     ```
 
-1. Get the JWT token for Azure deployment.
-
-    ```bash
-    # bash/zsh
-    ```
-
-    ```powershell
-    # PowerShell
-    $($(dotnet user-secrets `
-        --project ./src/McpTodo.ClientApp list --json).Replace("//BEGIN", "").Replace("//END", "") `
-        | ConvertFrom-Json)."McpServers:JWT:Token"
-    ```
-
 ### Run on Azure
 
 1. Check that you have the necessary permissions:
@@ -130,6 +117,9 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
 
     ```bash
     # bash/zsh
+    env_dir=".azure/$(azd env get-value AZURE_ENV_NAME)"
+    mkdir -p "$env_dir"
+    cat ./src/McpTodo.ServerApp/.env >> "$env_dir/.env"
     ```
 
     ```powershell
