@@ -10,14 +10,14 @@ param tags object = {}
 param mcpTodoClientAppExists bool
 param mcpTodoServerAppExists bool
 
-@description('Id of the user or app to assign application roles')
-param principalId string
+//@description('Id of the user or app to assign application roles')
+//param principalId string
 
 @description('Whether to use the built-in login feature for the application or not')
 param useLogin bool = true
 
-@description('Whether to use API Management or not')
-param useApiManagement bool = false
+//@description('Whether to use API Management or not')
+//param useApiManagement bool = false
 
 @description('The connection string to OpenAI.')
 @secure()
@@ -77,6 +77,7 @@ module storageAccount 'br/public:avm/res/storage/storage-account:0.15.0' = if (u
   }
 }
 
+/*
 // API Management
 module apiManagement 'br/public:avm/res/api-management/service:0.9.1' = if (useApiManagement == true) {
   name: 'apimanagement'
@@ -135,6 +136,7 @@ module apimApi './modules/apim-api.bicep' = if (useApiManagement == true) {
     apimProduct
   ]
 }
+*/
 
 // Container registry
 module containerRegistry 'br/public:avm/res/container-registry/registry:0.6.0' = {
@@ -361,7 +363,8 @@ module mcpTodoClientApp 'br/public:avm/res/app/container-app:0.16.0' = {
           }
           {
             name: 'McpServers__TodoList'
-            value: useApiManagement ? 'https://${apiManagement.outputs.name}.azure-api.net' : 'https://${mcpTodoServerApp.outputs.fqdn}'
+            value: 'https://${mcpTodoServerApp.outputs.fqdn}'
+            //value: useApiManagement ? 'https://${apiManagement.outputs.name}.azure-api.net' : 'https://${mcpTodoServerApp.outputs.fqdn}'
           }
           {
             name: 'ConnectionStrings__OpenAI'

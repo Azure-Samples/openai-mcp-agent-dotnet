@@ -12,14 +12,14 @@ param location string
 param mcpTodoServerAppExists bool
 param mcpTodoClientAppExists bool
 
-@description('Id of the user or app to assign application roles')
-param principalId string
+//@description('Id of the user or app to assign application roles')
+//param principalId string
 
 @description('Whether to use the built-in login feature for the application or not')
 param useLogin bool = true
 
-@description('Whether to use API Management or not')
-param useApiManagement bool = false
+//@description('Whether to use API Management or not')
+//param useApiManagement bool = false
 
 @description('The connection string to OpenAI.')
 @secure()
@@ -67,11 +67,11 @@ module resources 'resources.bicep' = {
     environmentName: environmentName
     location: location
     tags: tags
-    principalId: principalId
+    //principalId: principalId
     mcpTodoServerAppExists: mcpTodoServerAppExists
     mcpTodoClientAppExists: mcpTodoClientAppExists
     useLogin: useLogin
-    useApiManagement: useApiManagement
+    //useApiManagement: useApiManagement
     openAIConnectionString: openAIConnectionString
     jwtAudience: jwtAudience
     jwtIssuer: jwtIssuer
