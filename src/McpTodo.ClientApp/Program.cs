@@ -7,67 +7,60 @@ using McpTodo.ClientApp.Components;
 
 using Microsoft.Extensions.AI;
 
-using ModelContextProtocol.Client;
-using ModelContextProtocol.Protocol;
-
 using OpenAI;
+using OpenAI.Responses;
+
+#pragma warning disable OPENAI001
 
 var builder = WebApplication.CreateBuilder(args);
-
-var config = builder.Configuration;
-var connectionstring = config.GetConnectionString("openai") ?? throw new InvalidOperationException("Missing connection string: openai.");
-var endpoint = connectionstring.Split(';').FirstOrDefault(x => x.StartsWith("Endpoint=", StringComparison.InvariantCultureIgnoreCase))?.Split('=')[1]
-                   ?? throw new InvalidOperationException("Missing endpoint.");
-var apiKey = connectionstring.Split(';').FirstOrDefault(x => x.StartsWith("Key=", StringComparison.InvariantCultureIgnoreCase))?.Split('=')[1]
-                 ?? throw new InvalidOperationException("Missing API key.");
 
 builder.AddServiceDefaults();
 
 builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();
 
-var credential = new ApiKeyCredential(apiKey);
-var openAIOptions = new OpenAIClientOptions()
+builder.Services.AddScoped<OpenAIResponseClient>(sp =>
 {
-    Endpoint = new Uri(endpoint),
-};
+    IConfiguration config = sp.GetRequiredService<IConfiguration>();
+    string connectionstring = config.GetConnectionString("openai") ?? throw new InvalidOperationException("Missing connection string: openai.");
+    string endpoint = connectionstring.Split(';').FirstOrDefault(x => x.StartsWith("Endpoint=", StringComparison.InvariantCultureIgnoreCase))?.Split('=')[1]
+                      ?? throw new InvalidOperationException("Missing endpoint.");
+    string apiKey = connectionstring.Split(';').FirstOrDefault(x => x.StartsWith("Key=", StringComparison.InvariantCultureIgnoreCase))?.Split('=')[1]
+                    ?? throw new InvalidOperationException("Missing API key.");
 
-var openAIClient = Constants.GitHubModelEndpoints.Contains(endpoint.TrimEnd('/'))
-                   ? new OpenAIClient(credential, openAIOptions)
-                   : new AzureOpenAIClient(new Uri(endpoint), credential);
-var chatClient = openAIClient.GetChatClient(config["OpenAI:DeploymentName"]).AsIChatClient();
-
-builder.Services.AddChatClient(chatClient)
-                .UseFunctionInvocation()
-                .UseLogging();
-
-builder.Services.AddSingleton<IMcpClient>(sp =>
-{
-    var config = sp.GetRequiredService<IConfiguration>();
-    var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
-
-    var uri = new Uri(config["McpServers:TodoList"]!);
-
-    var clientTransportOptions = new SseClientTransportOptions()
+    ApiKeyCredential credential = new(apiKey);
+    OpenAIClientOptions openAIOptions = new()
     {
-        Endpoint = new Uri($"{uri.AbsoluteUri.TrimEnd('/')}/mcp"),
-        AdditionalHeaders = new Dictionary<string, string>
-        {
-            { "Authorization", $"Bearer {config["McpServers:JWT:Token"]!}" }
-        }
-    };
-    var clientTransport = new SseClientTransport(clientTransportOptions, loggerFactory);
-
-    var clientOptions = new McpClientOptions()
-    {
-        ClientInfo = new Implementation()
-        {
-            Name = "MCP Todo Client",
-            Version = "1.0.0",
-        }
+        Endpoint = new Uri(endpoint),
     };
 
-    return McpClientFactory.CreateAsync(clientTransport, clientOptions, loggerFactory).GetAwaiter().GetResult();
+    OpenAIClient openAIClient = Constants.GitHubModelEndpoints.Contains(endpoint.TrimEnd('/'))
+                              ? new OpenAIClient(credential, openAIOptions)
+                              : new AzureOpenAIClient(new Uri(endpoint), credential);
+
+    OpenAIResponseClient responseClient = openAIClient.GetOpenAIResponseClient(config["OpenAI:DeploymentName"]);
+
+    return responseClient;
+});
+
+builder.Services.AddSingleton<ResponseCreationOptions>(sp =>
+{
+    IConfiguration config = sp.GetRequiredService<IConfiguration>();
+
+    ResponseCreationOptions options = new()
+    {
+        Tools = { ResponseTool.CreateMcpTool(
+            serverLabel: "TodoList",
+            serverUri: new Uri($"{config["McpServers:TodoList"]!.TrimEnd('/')}/mcp"),
+            headers: new Dictionary<string, string>
+            {
+                { "Authorization", $"Bearer {config["McpServers:JWT:Token"]!}" }
+            },
+            toolCallApprovalPolicy: new McpToolCallApprovalPolicy(GlobalMcpToolCallApprovalPolicy.NeverRequireApproval)
+        ) }
+    };
+
+    return options;
 });
 
 var app = builder.Build();
