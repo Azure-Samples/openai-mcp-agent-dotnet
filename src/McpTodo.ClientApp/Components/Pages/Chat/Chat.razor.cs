@@ -1,5 +1,7 @@
 ﻿#pragma warning disable OPENAI001
 
+using McpTodo.ClientApp.Extensions;
+
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.AI;
 
@@ -11,11 +13,11 @@ namespace McpTodo.ClientApp.Components.Pages.Chat;
 
 public partial class Chat : ComponentBase, IDisposable
 {
-    [Inject]
-    public IChatClient ChatClient { get; set; } = null!;
+    // [Inject]
+    // public IChatClient ChatClient { get; set; } = null!;
 
-    [Inject]
-    public McpClient McpClient { get; set; } = null!;
+    // [Inject]
+    // public McpClient McpClient { get; set; } = null!;
 
     [Inject]
     public OpenAIResponseClient ResponseClient { get; set; } = null!;
@@ -31,9 +33,10 @@ public partial class Chat : ComponentBase, IDisposable
         Answer in English.
         ";
 
-    private readonly ChatOptions chatOptions = new();
-    private IEnumerable<McpClientTool> tools = null!;
-    private readonly List<ChatMessage> messages = new();
+    // private readonly ChatOptions chatOptions = new();
+    // private IEnumerable<McpClientTool> tools = null!;
+    private readonly List<ChatMessage> messages = [];
+    private readonly List<ResponseItem> responseItems = [];
     private CancellationTokenSource? currentResponseCancellation;
     private ChatMessage? currentResponseMessage;
     private ChatInput? chatInput;
@@ -42,8 +45,12 @@ public partial class Chat : ComponentBase, IDisposable
     protected override async Task OnInitializedAsync()
     {
         messages.Add(new(ChatRole.System, SystemPrompt));
-        tools = await McpClient.ListToolsAsync();
-        chatOptions.Tools = [.. tools];
+        responseItems.Add(ResponseItem.CreateSystemMessageItem(SystemPrompt));
+
+        // tools = await McpClient.ListToolsAsync();
+        // chatOptions.Tools = [.. tools];
+
+        await Task.CompletedTask;
     }
 
     private async Task AddUserMessageAsync(ChatMessage userMessage)
@@ -52,6 +59,8 @@ public partial class Chat : ComponentBase, IDisposable
 
         // Add the user message to the conversation
         messages.Add(userMessage);
+        responseItems.Add(ResponseItem.CreateUserMessageItem(userMessage.Text));
+
         chatSuggestions?.Clear();
         await chatInput!.FocusAsync();
 
@@ -59,10 +68,10 @@ public partial class Chat : ComponentBase, IDisposable
         var responseText = new TextContent("");
         currentResponseMessage = new ChatMessage(ChatRole.Assistant, [responseText]);
         currentResponseCancellation = new();
-        await foreach (var update in ChatClient.GetStreamingResponseAsync([.. messages], chatOptions, currentResponseCancellation.Token))
+
+        await foreach (var update in ResponseClient.CreateResponseStreamingAsync(responseItems, ResponseOptions, currentResponseCancellation.Token))
         {
-            messages.AddMessages(update, filter: c => c is not TextContent);
-            responseText.Text += update.Text;
+            responseText.Text += responseItems.AddResponse(update);
             ChatMessageItem.NotifyChanged(currentResponseMessage);
         }
 
@@ -89,6 +98,10 @@ public partial class Chat : ComponentBase, IDisposable
         CancelAnyCurrentResponse();
         messages.Clear();
         messages.Add(new(ChatRole.System, SystemPrompt));
+
+        responseItems.Clear();
+        responseItems.Add(ResponseItem.CreateSystemMessageItem(SystemPrompt));
+
         chatSuggestions?.Clear();
         await chatInput!.FocusAsync();
     }
