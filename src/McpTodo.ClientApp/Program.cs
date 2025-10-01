@@ -1,11 +1,6 @@
 using System.ClientModel;
 
-using Azure.AI.OpenAI;
-
-using McpTodo.ClientApp;
 using McpTodo.ClientApp.Components;
-
-using Microsoft.Extensions.AI;
 
 using OpenAI;
 using OpenAI.Responses;
@@ -13,51 +8,49 @@ using OpenAI.Responses;
 #pragma warning disable OPENAI001
 
 var builder = WebApplication.CreateBuilder(args);
-
-builder.AddServiceDefaults();
+var config = builder.Configuration;
 
 builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();
 
 builder.Services.AddScoped<OpenAIResponseClient>(sp =>
 {
-    IConfiguration config = sp.GetRequiredService<IConfiguration>();
-    string connectionstring = config.GetConnectionString("openai") ?? throw new InvalidOperationException("Missing connection string: openai.");
-    string endpoint = connectionstring.Split(';').FirstOrDefault(x => x.StartsWith("Endpoint=", StringComparison.InvariantCultureIgnoreCase))?.Split('=')[1]
-                      ?? throw new InvalidOperationException("Missing endpoint.");
-    string apiKey = connectionstring.Split(';').FirstOrDefault(x => x.StartsWith("Key=", StringComparison.InvariantCultureIgnoreCase))?.Split('=')[1]
-                    ?? throw new InvalidOperationException("Missing API key.");
+    string? endpoint = config["OpenAI:Endpoint"]?.TrimEnd('/');
+    OpenAIClientOptions? openAIOptions = string.IsNullOrWhiteSpace(endpoint) == true
+        ? null
+        : (endpoint.TrimEnd('/').EndsWith(".openai.azure.com") == true
+              ? new() { Endpoint = new Uri($"{endpoint}/openai/v1/") }
+              : throw new InvalidOperationException("Invalid Azure OpenAI endpoint.")
+          );
 
+    string? apiKey = string.IsNullOrWhiteSpace(config["OpenAI:ApiKey"]) == false
+                   ? config["OpenAI:ApiKey"]!.Trim()
+                   : throw new InvalidOperationException("Missing API key.");
     ApiKeyCredential credential = new(apiKey);
-    OpenAIClientOptions openAIOptions = new()
-    {
-        Endpoint = new Uri(endpoint),
-    };
 
-    OpenAIClient openAIClient = Constants.GitHubModelEndpoints.Contains(endpoint.TrimEnd('/'))
-                              ? new OpenAIClient(credential, openAIOptions)
-                              : new AzureOpenAIClient(new Uri(endpoint), credential);
-
-    OpenAIResponseClient responseClient = openAIClient.GetOpenAIResponseClient(config["OpenAI:DeploymentName"]);
+    string? model = config["OpenAI:DeploymentName"]?.Trim() ?? "gpt-5-mini";
+    OpenAIResponseClient responseClient = openAIOptions == null
+        ? new(model, credential)
+        : new(model, credential, openAIOptions);
 
     return responseClient;
 });
 
 builder.Services.AddSingleton<ResponseCreationOptions>(sp =>
 {
-    IConfiguration config = sp.GetRequiredService<IConfiguration>();
+    string? serverUri = config["McpServers:TodoList"]?.TrimEnd('/') ?? throw new InvalidOperationException("Missing MCP server URL.");
+    string? authorizationToken = config["McpServers:JWT:Token"]?.Trim() ?? throw new InvalidOperationException("Missing MCP server JWT token.");
 
     ResponseCreationOptions options = new()
     {
-        Tools = { ResponseTool.CreateMcpTool(
-            serverLabel: "TodoList",
-            serverUri: new Uri($"{config["McpServers:TodoList"]!.TrimEnd('/')}/mcp"),
-            headers: new Dictionary<string, string>
-            {
-                { "Authorization", $"Bearer {config["McpServers:JWT:Token"]!}" }
-            },
-            toolCallApprovalPolicy: new McpToolCallApprovalPolicy(GlobalMcpToolCallApprovalPolicy.NeverRequireApproval)
-        ) }
+        Tools = {
+            ResponseTool.CreateMcpTool(
+                serverLabel: "TodoList",
+                serverUri: new Uri($"{serverUri}/mcp"),
+                authorizationToken: authorizationToken,
+                toolCallApprovalPolicy: new McpToolCallApprovalPolicy(GlobalMcpToolCallApprovalPolicy.NeverRequireApproval)
+            )
+        }
     };
 
     return options;
@@ -71,15 +64,13 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
+    app.UseHttpsRedirection();
 }
 
-app.UseHttpsRedirection();
 app.UseAntiforgery();
 
 app.UseStaticFiles();
 app.MapRazorComponents<App>()
    .AddInteractiveServerRenderMode();
-
-app.MapDefaultEndpoints();
 
 app.Run();

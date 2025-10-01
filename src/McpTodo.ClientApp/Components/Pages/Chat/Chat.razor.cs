@@ -5,20 +5,12 @@ using McpTodo.ClientApp.Extensions;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.AI;
 
-using ModelContextProtocol.Client;
-
 using OpenAI.Responses;
 
 namespace McpTodo.ClientApp.Components.Pages.Chat;
 
 public partial class Chat : ComponentBase, IDisposable
 {
-    // [Inject]
-    // public IChatClient ChatClient { get; set; } = null!;
-
-    // [Inject]
-    // public McpClient McpClient { get; set; } = null!;
-
     [Inject]
     public OpenAIResponseClient ResponseClient { get; set; } = null!;
 
@@ -33,8 +25,6 @@ public partial class Chat : ComponentBase, IDisposable
         Answer in English.
         ";
 
-    // private readonly ChatOptions chatOptions = new();
-    // private IEnumerable<McpClientTool> tools = null!;
     private readonly List<ChatMessage> messages = [];
     private readonly List<ResponseItem> responseItems = [];
     private CancellationTokenSource? currentResponseCancellation;
@@ -46,9 +36,6 @@ public partial class Chat : ComponentBase, IDisposable
     {
         messages.Add(new(ChatRole.System, SystemPrompt));
         responseItems.Add(ResponseItem.CreateSystemMessageItem(SystemPrompt));
-
-        // tools = await McpClient.ListToolsAsync();
-        // chatOptions.Tools = [.. tools];
 
         await Task.CompletedTask;
     }

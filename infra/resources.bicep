@@ -19,9 +19,12 @@ param useLogin bool = true
 @description('Whether to use API Management or not')
 param useApiManagement bool = false
 
-@description('The connection string to OpenAI.')
+@description('The Azure OpenAI endpoint.')
 @secure()
-param openAIConnectionString string
+param openAIEndpoint string = ''
+@description('The Azure OpenAI API key.')
+@secure()
+param openAIApiKey string
 
 @description('The JWT audience for auth.')
 @secure()
@@ -330,8 +333,12 @@ module mcpTodoClientApp 'br/public:avm/res/app/container-app:0.16.0' = {
     }
     secrets: [
       {
-        name: 'connectionstrings-openai'
-        value: openAIConnectionString
+        name: 'openai-endpoint'
+        value: openAIEndpoint
+      }
+      {
+        name: 'openai-api-key'
+        value: openAIApiKey
       }
       {
         name: 'jwt-token'
@@ -364,8 +371,12 @@ module mcpTodoClientApp 'br/public:avm/res/app/container-app:0.16.0' = {
             value: useApiManagement ? 'https://${apiManagement.outputs.name}.azure-api.net' : 'https://${mcpTodoServerApp.outputs.fqdn}'
           }
           {
-            name: 'ConnectionStrings__OpenAI'
-            secretRef: 'connectionstrings-openai'
+            name: 'OpenAI__Endpoint'
+            secretRef: 'openai-endpoint'
+          }
+          {
+            name: 'OpenAI__ApiKey'
+            secretRef: 'openai-api-key'
           }
           {
             name: 'McpServers__JWT__Token'

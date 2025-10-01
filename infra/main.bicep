@@ -21,9 +21,12 @@ param useLogin bool = true
 @description('Whether to use API Management or not')
 param useApiManagement bool = false
 
-@description('The connection string to OpenAI.')
+@description('The Azure OpenAI endpoint.')
 @secure()
-param openAIConnectionString string
+param openAIEndpoint string = ''
+@description('The Azure OpenAI API key.')
+@secure()
+param openAIApiKey string
 
 @description('The JWT audience for auth.')
 @secure()
@@ -72,7 +75,8 @@ module resources 'resources.bicep' = {
     mcpTodoClientAppExists: mcpTodoClientAppExists
     useLogin: useLogin
     useApiManagement: useApiManagement
-    openAIConnectionString: openAIConnectionString
+    openAIEndpoint: openAIEndpoint
+    openAIApiKey: openAIApiKey
     jwtAudience: jwtAudience
     jwtIssuer: jwtIssuer
     jwtExpiry: jwtExpiry

@@ -81,6 +81,19 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
     }
     ```
 
+1. Add Azure OpenAI endpoint and API key. The Azure OpenAI endpoint MUST end with `openai.azure.com/`.
+
+    ```bash
+    dotnet user-secrets --project ./src/McpTodo.ClientApp set OpenAI:Endpoint {{AZURE_OPENAI_ENDPOINT}}
+    dotnet user-secrets --project ./src/McpTodo.ClientApp set OpenAI:ApiKey {{AZURE_OPENAI_API_KEY}}
+    ```
+
+   > **NOTE**: If you want to use OpenAI API, add the API key only. The OpenAI API key SHOULD start with `sk-proj-`.
+   >
+   > ```bash
+   > dotnet user-secrets --project ./src/McpTodo.ClientApp set OpenAI:ApiKey {{OPENAI_API_KEY}}
+   > ```
+
 ### Get MCP Server App
 
 1. Clone the MCP server.
@@ -113,6 +126,26 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
     azd auth login
     ```
 
+1. Add user secrets to azd environment.
+
+    ```bash
+    # zsh/bash
+    secrets=$(dotnet user-secrets --project ./src/McpTodo.ClientApp list --json | \
+        grep -v '^//' | jq -r '.')
+
+    azd env set OPENAI_ENDPOINT $(echo "$secrets" | jq -r '.["OpenAI:Endpoint"]')
+    azd env set OPENAI_API_KEY $(echo "$secrets" | jq -r '.["OpenAI:ApiKey"]')
+    ```
+
+    ```powershell
+    # PowerShell
+    $secrets = dotnet user-secrets --project ./src/McpTodo.ClientApp list --json | `
+        Select-String -NotMatch '^//(BEGIN|END)' | ConvertFrom-Json
+
+    azd env set OPENAI_ENDPOINT $secrets.'OpenAI:Endpoint'
+    azd env set OPENAI_API_KEY $secrets.'OpenAI:ApiKey'
+    ```
+
 1. Add JWT token to azd environment.
 
     ```bash
@@ -142,9 +175,7 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
    >    azd env set USE_LOGIN false
    >    ```
    >
-   > 1. During the deployment, you will be asked to enter the Azure Subscription, location and OpenAI connection string.
-   > 1. The connection string should be in the format of `Endpoint={{AZURE_OPENAI_ENDPOINT}};Key={{AZURE_OPENAI_API_KEY}}`. The Azure OpenAI API endpoint should look like `https://<location>.api.cognitive.microsoft.com/`.
-   > 1. You can add GitHub PAT in the same format above to use GitHub Models like `Endpoint=https://models.inference.ai.azure.com;Key={{GITHUB_PAT}}`.
+   > 1. During the deployment, you will be asked to enter the Azure Subscription and location.
 
 1. In the terminal, get the client app URL deployed. It might look like:
 
@@ -170,88 +201,11 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
     azd down --force --prune
     ```
 
-### Run locally
-
-1. Make sure you're in the `openai-mcp-agent-dotnet` directory.
-1. Add Azure OpenAI API Key.
-
-    ```bash
-    dotnet user-secrets --project ./src/McpTodo.ClientApp set ConnectionStrings:openai "Endpoint={{AZURE_OPENAI_ENDPOINT}};Key={{AZURE_OPENAI_API_KEY}}"
-    ```
-
-   > **NOTE**: You can add GitHub PAT in the same format above to use GitHub Models like `Endpoint=https://models.inference.ai.azure.com;Key={{GITHUB_PAT}}`.
-
-1. Run the MCP server app.
-
-    ```bash
-    cd ./src/McpTodo.ServerApp
-    npm run dev
-    ```
-
-1. Run the client app in another terminal.
-
-    ```bash
-    dotnet watch run --project ./src/McpTodo.ClientApp
-    ```
-
-1. Navigate to `https://localhost:7256` or `http://localhost:5011` and enter prompts like:
-
-    ```text
-    Give me list of to do.
-    Set "meeting at 1pm".
-    Give me list of to do.
-    Mark #1 as completed.
-    Delete #1 from the to-do list.
-    ```
-
-1. Type `CTRL`+`C` to stop the agent app.
-
-### Run in local containers
-
-1. Make sure that you're running either Docker Desktop or Podman Desktop on your local machine.
-1. Make sure you're in the `openai-mcp-agent-dotnet` directory.
-1. Export user secrets to `.env`.
-
-    ```bash
-    # zsh/bash
-    dotnet user-secrets list --project src/McpTodo.ClientApp \
-        | sed 's/ConnectionStrings:openai/ConnectionStrings__openai/' \
-        | sed 's/McpServers:JWT:Token/McpServers__JWT__Token/' > .env
-    ```
-
-    ```bash
-    # PowerShell
-    $($(dotnet user-secrets list --project src/McpTodo.ClientApp) `
-        -replace "ConnectionStrings:openai", "ConnectionStrings__openai") `
-        -replace "McpServers:JWT:Token", "McpServers__JWT__Token" | Out-File ".env" -Force
-    ```
-
-1. Run both apps in containers.
-
-    ```bash
-    docker compose up --build
-    ```
-
-1. Navigate to `http://localhost:8080` and enter prompts like:
-
-    ```text
-    Give me list of to do.
-    Set "meeting at 1pm".
-    Give me list of to do.
-    Mark #1 as completed.
-    Delete #1 from the to-do list.
-    ```
-
-1. Type `CTRL`+`C` to stop all containers.
-1. Delete all running containers.
-
-    ```bash
-    docker compose down
-    ```
-
 ## Resources
 
+- [OpenAI SDK - .NET](https://github.com/openai/openai-dotnet)
+- [OpenAI MCP samples](https://platform.openai.com/docs/guides/tools-connectors-mcp)
+- [Azure OpenAI - Next-generation API](https://learn.microsoft.com/azure/ai-foundry/openai/api-version-lifecycle#next-generation-api)
 - [.NET AI Template](https://devblogs.microsoft.com/dotnet/announcing-dotnet-ai-template-preview2/)
-- [Model Context Protocol (MCP) C# SDK](https://github.com/modelcontextprotocol/csharp-sdk)
 - [MCP .NET samples](https://github.com/microsoft/mcp-dotnet-samples)
 - [MCP Todo app in TypeScript](https://github.com/Azure-Samples/mcp-container-ts)

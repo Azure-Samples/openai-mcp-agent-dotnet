@@ -26,6 +26,12 @@
       "mcpServerIngressPort": {
         "value": "${MCP_SERVER_INGRESS_PORT=3000}"
       },
+      "openAIEndpoint": {
+        "value": "${OPENAI_ENDPOINT}"
+      },
+      "openAIApiKey": {
+        "value": "${OPENAI_API_KEY}"
+      },
       "jwtAudience": {
         "value": "${JWT_AUDIENCE}"
       },
