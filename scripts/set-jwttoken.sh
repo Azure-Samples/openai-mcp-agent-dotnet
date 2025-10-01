@@ -28,7 +28,7 @@ echo "Installing npm packages..."
 npm install
 
 echo "Generating JWT token..."
-npm run generate-token
+npm run generate-token -- --admin
 
 if [[ ! -f .env ]]; then
 	echo ".env not found after token generation" >&2

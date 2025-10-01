@@ -26,7 +26,7 @@ Write-Host "Installing npm packages..."
 npm install
 
 Write-Host "Generating JWT token..."
-npm run generate-token
+npm run generate-token -- --admin
 
 Write-Host "Storing JWT token in user-secrets..."
 # Read .env into a hashtable ($dotenv)
