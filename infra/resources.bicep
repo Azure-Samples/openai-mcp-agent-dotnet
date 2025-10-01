@@ -207,7 +207,7 @@ module mcpTodoServerApp 'br/public:avm/res/app/container-app:0.16.0' = {
   params: {
     name: 'mcptodo-serverapp'
     ingressTargetPort: mcpServerIngressPort
-    ingressExternal: false
+    ingressExternal: true
     scaleSettings: {
       minReplicas: 1
       maxReplicas: 10
