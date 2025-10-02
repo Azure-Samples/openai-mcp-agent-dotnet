@@ -1,6 +1,9 @@
 using System.ClientModel;
 using System.Data.Common;
 
+using Azure.AI.OpenAI;
+using Azure.Identity;
+
 using McpTodo.ClientApp.Components;
 
 using OpenAI;
@@ -17,46 +20,83 @@ builder.Services.AddRazorComponents()
 builder.Services.AddScoped<OpenAIResponseClient>(sp =>
 {
     string? connectionString = config.GetConnectionString("openai");
-    OpenAIClientOptions? openAIOptions;
-    ApiKeyCredential? credential;
+
+    // Helper to normalize endpoint and detect Azure OpenAI endpoints
+    static (Uri endpointUri, bool isAzure) BuildEndpoint(string endpointRaw)
+    {
+        var trimmed = endpointRaw.Trim().TrimEnd('/');
+        bool isAzure = trimmed.EndsWith(".openai.azure.com", StringComparison.OrdinalIgnoreCase);
+        var uri = isAzure ? new Uri($"{trimmed}/openai/v1/") : new Uri(trimmed);
+        return (uri, isAzure);
+    }
+
+    string model = config["OpenAI:DeploymentName"]?.Trim() ?? "gpt-5-mini";
+
+    OpenAIClientOptions? openAIOptions = null;
+    ApiKeyCredential? apiKeyCredential = null;
+
     if (!string.IsNullOrWhiteSpace(connectionString))
     {
         var parts = new DbConnectionStringBuilder() { ConnectionString = connectionString };
-        string? endpoint = parts.TryGetValue("Endpoint", out var ep) == true && ep is string epStr
-                        ? (epStr.TrimEnd('/').EndsWith(".openai.azure.com") == true
-                              ? $"{epStr.TrimEnd('/')}/openai/v1/"
-                              : epStr.TrimEnd('/')
-                          )
-                        : throw new InvalidOperationException("Missing Endpoint in connection string.");
 
-        openAIOptions = new OpenAIClientOptions { Endpoint = new Uri(endpoint) };
+        if (parts.TryGetValue("Endpoint", out var ep) && ep is string epStr && string.IsNullOrWhiteSpace(epStr) == false)
+        {
+            var (uri, isAzure) = BuildEndpoint(epStr);
 
-        credential = parts.TryGetValue("Key", out var key) == true && key is string keyStr && string.IsNullOrWhiteSpace(keyStr) == false
-                   ? new(keyStr.Trim())
-                   : throw new InvalidOperationException("Missing Key in connection string.");
+            if (parts.TryGetValue("Key", out var key) && key is string keyStr && string.IsNullOrWhiteSpace(keyStr) == false)
+            {
+                apiKeyCredential = new ApiKeyCredential(keyStr.Trim());
+            }
+            else
+            {
+                return isAzure
+                    ? new AzureOpenAIClient(uri, new DefaultAzureCredential()).GetOpenAIResponseClient(model)
+                    : throw new InvalidOperationException("Missing Key in connection string.");
+            }
+
+            openAIOptions = new OpenAIClientOptions { Endpoint = uri };
+        }
+        else
+        {
+            throw new InvalidOperationException("Missing Endpoint in connection string.");
+        }
     }
     else
     {
-        string? endpoint = config["OpenAI:Endpoint"]?.TrimEnd('/');
-        openAIOptions = string.IsNullOrWhiteSpace(endpoint) == true
-            ? null
-            : (endpoint.TrimEnd('/').EndsWith(".openai.azure.com") == true
-                  ? new() { Endpoint = new Uri($"{endpoint}/openai/v1/") }
-                  : throw new InvalidOperationException("Invalid Azure OpenAI endpoint.")
-              );
+        string? endpointCfg = config["OpenAI:Endpoint"]?.Trim();
+        string? apiKeyCfg = config["OpenAI:ApiKey"]?.Trim();
 
-        string? apiKey = string.IsNullOrWhiteSpace(config["OpenAI:ApiKey"]) == false
-                       ? config["OpenAI:ApiKey"]!.Trim()
-                       : throw new InvalidOperationException("Missing API key.");
-        credential = new(apiKey);
+        if (!string.IsNullOrWhiteSpace(endpointCfg))
+        {
+            var (uri, isAzure) = BuildEndpoint(endpointCfg);
+
+            if (!string.IsNullOrWhiteSpace(apiKeyCfg))
+            {
+                apiKeyCredential = new ApiKeyCredential(apiKeyCfg);
+            }
+            else
+            {
+                return isAzure
+                    ? new AzureOpenAIClient(uri, new DefaultAzureCredential()).GetOpenAIResponseClient(model)
+                    : throw new InvalidOperationException("Missing Key in connection string.");
+            }
+
+            openAIOptions = new OpenAIClientOptions { Endpoint = uri };
+        }
+        else
+        {
+            // No endpoint configured: require API key for OpenAI API
+            apiKeyCredential = !string.IsNullOrWhiteSpace(apiKeyCfg)
+                ? new ApiKeyCredential(apiKeyCfg)
+                : throw new InvalidOperationException("Missing OpenAI configuration. Provide either a connection string named 'openai' or OpenAI:Endpoint and OpenAI:ApiKey configuration.");
+        }
     }
 
-    string? model = config["OpenAI:DeploymentName"]?.Trim() ?? "gpt-5-mini";
-    OpenAIResponseClient responseClient = openAIOptions == null
-        ? new(model, credential)
-        : new(model, credential, openAIOptions);
-
-    return responseClient;
+    return apiKeyCredential is null
+        ? throw new InvalidOperationException("Missing API key credential for OpenAI client.")
+        : openAIOptions is null
+        ? new OpenAIResponseClient(model, apiKeyCredential)
+        : new OpenAIResponseClient(model, apiKeyCredential, openAIOptions);
 });
 
 builder.Services.AddSingleton<ResponseCreationOptions>(sp =>
