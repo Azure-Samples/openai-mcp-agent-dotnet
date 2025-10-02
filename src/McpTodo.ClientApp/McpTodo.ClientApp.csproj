@@ -11,14 +11,8 @@
   <ItemGroup>
     <PackageReference Include="Azure.AI.OpenAI" Version="2.*-*" />
     <PackageReference Include="Azure.Projects.AI" Version="1.*-*" />
-    <PackageReference Include="Microsoft.Extensions.AI" Version="9.*" />
-    <PackageReference Include="Microsoft.Extensions.AI.OpenAI" Version="9.*-*" />
     <PackageReference Include="OpenAI" Version="2.*" />
     <PackageReference Include="System.Linq.Async" Version="6.*" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\McpTodo.ServiceDefaults\McpTodo.ServiceDefaults.csproj" />
   </ItemGroup>
 
 </Project>

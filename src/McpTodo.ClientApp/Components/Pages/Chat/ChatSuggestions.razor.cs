@@ -1,8 +1,8 @@
 #pragma warning disable OPENAI001
 
 using Microsoft.AspNetCore.Components;
-using Microsoft.Extensions.AI;
 
+using OpenAI.Chat;
 using OpenAI.Responses;
 
 namespace McpTodo.ClientApp.Components.Pages.Chat;
@@ -51,21 +51,21 @@ public partial class ChatSuggestions : ComponentBase
             List<ResponseItem> responseItems = [];
             foreach (var message in messages)
             {
-                if (message.Role == ChatRole.System)
+                if (message is SystemChatMessage)
                 {
-                    responseItems.Add(ResponseItem.CreateSystemMessageItem(message.Text));
+                    responseItems.Add(ResponseItem.CreateSystemMessageItem(message.Content[0].Text));
                 }
-                else if (message.Role == ChatRole.User)
+                else if (message is UserChatMessage)
                 {
-                    responseItems.Add(ResponseItem.CreateUserMessageItem(message.Text));
+                    responseItems.Add(ResponseItem.CreateUserMessageItem(message.Content[0].Text));
                 }
-                else if (message.Role == ChatRole.Assistant)
+                else if (message is AssistantChatMessage)
                 {
-                    responseItems.Add(ResponseItem.CreateAssistantMessageItem(message.Text));
+                    responseItems.Add(ResponseItem.CreateAssistantMessageItem(message.Content[0].Text));
                 }
                 else
                 {
-                    throw new InvalidOperationException($"Unknown role: {message.Role}");
+                    throw new InvalidOperationException($"Unknown role: {message.GetType()}");
                 }
             }
 
@@ -74,7 +74,7 @@ public partial class ChatSuggestions : ComponentBase
                 ResponseItem.CreateUserMessageItem(Prompt)
             ], cancellationToken: cancellation.Token);
 
-            suggestions = [.. response.Value.AsChatResponse().Messages.Select(m => m.Text)];
+            // suggestions = [.. response.Value.OutputItems.Select(m => m Text)];
 
             StateHasChanged();
         }
@@ -86,7 +86,7 @@ public partial class ChatSuggestions : ComponentBase
 
     private async Task AddSuggestionAsync(string text)
     {
-        await OnSelected.InvokeAsync(new(ChatRole.User, text));
+        await OnSelected.InvokeAsync(new UserChatMessage(text));
     }
 
     private IEnumerable<ResponseItem> ReduceMessages(IReadOnlyList<ResponseItem> responseItems)

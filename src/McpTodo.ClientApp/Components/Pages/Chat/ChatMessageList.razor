@@ -29,7 +29,7 @@
     [Parameter]
     public RenderFragment? NoMessagesContent { get; set; }
 
-    private bool IsEmpty => !Messages.Any(m => (m.Role == ChatRole.User || m.Role == ChatRole.Assistant) && !string.IsNullOrEmpty(m.Text));
+    private bool IsEmpty => !Messages.Any(m => (m is UserChatMessage || m is AssistantChatMessage) && !string.IsNullOrEmpty(m.Content[0].Text));
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
