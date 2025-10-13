@@ -146,6 +146,8 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
     azd env set OPENAI_API_KEY $secrets.'OpenAI:ApiKey'
     ```
 
+   > **NOTE**: If you want to use Azure Keyless access, please follow this document, [Use Azure OpenAI without keys](https://learn.microsoft.com/azure/developer/ai/keyless-connections).
+
 1. Add JWT token to azd environment.
 
     ```bash
