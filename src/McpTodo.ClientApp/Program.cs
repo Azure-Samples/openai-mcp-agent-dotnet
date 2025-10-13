@@ -1,8 +1,6 @@
-using System.ClientModel;
-
+using McpTodo.ClientApp.Builders;
 using McpTodo.ClientApp.Components;
 
-using OpenAI;
 using OpenAI.Responses;
 
 #pragma warning disable OPENAI001
@@ -15,24 +13,8 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddScoped<OpenAIResponseClient>(sp =>
 {
-    string? endpoint = config["OpenAI:Endpoint"]?.TrimEnd('/');
-    OpenAIClientOptions? openAIOptions = string.IsNullOrWhiteSpace(endpoint) == true
-        ? null
-        : (endpoint.TrimEnd('/').EndsWith(".openai.azure.com") == true
-              ? new() { Endpoint = new Uri($"{endpoint}/openai/v1/") }
-              : throw new InvalidOperationException("Invalid Azure OpenAI endpoint.")
-          );
-
-    string? apiKey = string.IsNullOrWhiteSpace(config["OpenAI:ApiKey"]) == false
-                   ? config["OpenAI:ApiKey"]!.Trim()
-                   : throw new InvalidOperationException("Missing API key.");
-    ApiKeyCredential credential = new(apiKey);
-
-    string? model = config["OpenAI:DeploymentName"]?.Trim() ?? "gpt-5-mini";
-    OpenAIResponseClient responseClient = openAIOptions == null
-        ? new(model, credential)
-        : new(model, credential, openAIOptions);
-
+    var responseClient = new OpenAIResponseClientBuilder(config)
+                             .Build();
     return responseClient;
 });
 

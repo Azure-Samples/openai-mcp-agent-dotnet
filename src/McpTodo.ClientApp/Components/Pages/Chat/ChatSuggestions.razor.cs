@@ -1,7 +1,8 @@
 #pragma warning disable OPENAI001
 
+using McpTodo.ClientApp.Models;
+
 using Microsoft.AspNetCore.Components;
-using Microsoft.Extensions.AI;
 
 using OpenAI.Responses;
 
@@ -20,6 +21,7 @@ public partial class ChatSuggestions : ComponentBase
         Each suggestion must be a complete sentence, maximum 6 words.
         Each suggestion must be phrased as something that I (the user) would ask you (the assistant) in response to your previous message,
         for example 'How do I do that?' or 'Explain ...'.
+        Every suggestion must be relevant to to-do list management and the context of our conversation so far.
         If there are no suggestions, reply with an empty list.
     ";
 
@@ -69,12 +71,16 @@ public partial class ChatSuggestions : ComponentBase
                 }
             }
 
+            var reducedMessages = ReduceMessages(responseItems);
             var response = await ResponseClient.CreateResponseAsync([
-                .. ReduceMessages(responseItems),
+                .. reducedMessages,
                 ResponseItem.CreateUserMessageItem(Prompt)
             ], cancellationToken: cancellation.Token);
 
-            suggestions = [.. response.Value.AsChatResponse().Messages.Select(m => m.Text)];
+            suggestions = [.. response.Value.GetOutputText()
+                                      .Split([ '\n', '\r' ], StringSplitOptions.RemoveEmptyEntries)
+                                      .Select(s => s.Trim())
+                                      .Where(s => !string.IsNullOrWhiteSpace(s))];
 
             StateHasChanged();
         }

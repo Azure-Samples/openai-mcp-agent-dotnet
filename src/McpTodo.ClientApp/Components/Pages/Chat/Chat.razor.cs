@@ -1,9 +1,9 @@
 ﻿#pragma warning disable OPENAI001
 
 using McpTodo.ClientApp.Extensions;
+using McpTodo.ClientApp.Models;
 
 using Microsoft.AspNetCore.Components;
-using Microsoft.Extensions.AI;
 
 using OpenAI.Responses;
 
@@ -51,19 +51,19 @@ public partial class Chat : ComponentBase, IDisposable
         chatSuggestions?.Clear();
         await chatInput!.FocusAsync();
 
-        // Stream and display a new response from the IChatClient
-        var responseText = new TextContent("");
-        currentResponseMessage = new ChatMessage(ChatRole.Assistant, [responseText]);
+        var responseText = string.Empty;
+        currentResponseMessage = new ChatMessage(ChatRole.Assistant, responseText);
         currentResponseCancellation = new();
 
         await foreach (var update in ResponseClient.CreateResponseStreamingAsync(responseItems, ResponseOptions, currentResponseCancellation.Token))
         {
-            responseText.Text += responseItems.AddResponse(update);
+            responseText += responseItems.AddResponse(update);
             ChatMessageItem.NotifyChanged(currentResponseMessage);
         }
 
         // Store the final response in the conversation, and begin getting suggestions
-        messages.Add(currentResponseMessage!);
+        currentResponseMessage.Content = [ responseText ];
+        messages.Add(currentResponseMessage);
         currentResponseMessage = null;
         chatSuggestions?.Update(messages);
     }
