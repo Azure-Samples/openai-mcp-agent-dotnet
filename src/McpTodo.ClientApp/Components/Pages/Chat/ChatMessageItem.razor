@@ -1,14 +1,15 @@
 @using System.Runtime.CompilerServices
 @using System.Text.RegularExpressions
 @using System.Linq
+@using OpenAI.Chat
 
-@if (Message.Role == ChatRole.User)
+@if (Message is UserChatMessage)
 {
     <div class="user-message">
-        @Message.Text
+        @Message.Content[0].Text
     </div>
 }
-else if (Message.Role == ChatRole.Assistant)
+else if (Message is AssistantChatMessage)
 {
     foreach (var content in Message.Content)
     {

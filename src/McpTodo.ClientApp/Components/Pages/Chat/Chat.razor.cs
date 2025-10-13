@@ -5,6 +5,7 @@ using McpTodo.ClientApp.Models;
 
 using Microsoft.AspNetCore.Components;
 
+using OpenAI.Chat;
 using OpenAI.Responses;
 
 namespace McpTodo.ClientApp.Components.Pages.Chat;
@@ -34,7 +35,7 @@ public partial class Chat : ComponentBase, IDisposable
 
     protected override async Task OnInitializedAsync()
     {
-        messages.Add(new(ChatRole.System, SystemPrompt));
+        messages.Add(new SystemChatMessage(SystemPrompt));
         responseItems.Add(ResponseItem.CreateSystemMessageItem(SystemPrompt));
 
         await Task.CompletedTask;
@@ -46,7 +47,7 @@ public partial class Chat : ComponentBase, IDisposable
 
         // Add the user message to the conversation
         messages.Add(userMessage);
-        responseItems.Add(ResponseItem.CreateUserMessageItem(userMessage.Text));
+        responseItems.Add(ResponseItem.CreateUserMessageItem(userMessage.Content[0].Text));
 
         chatSuggestions?.Clear();
         await chatInput!.FocusAsync();
@@ -84,7 +85,7 @@ public partial class Chat : ComponentBase, IDisposable
     {
         CancelAnyCurrentResponse();
         messages.Clear();
-        messages.Add(new(ChatRole.System, SystemPrompt));
+        messages.Add(new SystemChatMessage(SystemPrompt));
 
         responseItems.Clear();
         responseItems.Add(ResponseItem.CreateSystemMessageItem(SystemPrompt));
