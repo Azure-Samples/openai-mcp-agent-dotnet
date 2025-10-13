@@ -4,7 +4,6 @@ using McpTodo.ClientApp.Models;
 
 using Microsoft.AspNetCore.Components;
 
-using OpenAI.Chat;
 using OpenAI.Responses;
 
 namespace McpTodo.ClientApp.Components.Pages.Chat;
@@ -54,21 +53,21 @@ public partial class ChatSuggestions : ComponentBase
             List<ResponseItem> responseItems = [];
             foreach (var message in messages)
             {
-                if (message is SystemChatMessage)
+                if (message.Role == ChatRole.System)
                 {
-                    responseItems.Add(ResponseItem.CreateSystemMessageItem(message.Content[0].Text));
+                    responseItems.Add(ResponseItem.CreateSystemMessageItem(message.Text));
                 }
-                else if (message is UserChatMessage)
+                else if (message.Role == ChatRole.User)
                 {
-                    responseItems.Add(ResponseItem.CreateUserMessageItem(message.Content[0].Text));
+                    responseItems.Add(ResponseItem.CreateUserMessageItem(message.Text));
                 }
-                else if (message is AssistantChatMessage)
+                else if (message.Role == ChatRole.Assistant)
                 {
-                    responseItems.Add(ResponseItem.CreateAssistantMessageItem(message.Content[0].Text));
+                    responseItems.Add(ResponseItem.CreateAssistantMessageItem(message.Text));
                 }
                 else
                 {
-                    throw new InvalidOperationException($"Unknown role: {message.GetType()}");
+                    throw new InvalidOperationException($"Unknown role: {message.Role}");
                 }
             }
 
@@ -93,7 +92,7 @@ public partial class ChatSuggestions : ComponentBase
 
     private async Task AddSuggestionAsync(string text)
     {
-        await OnSelected.InvokeAsync(new UserChatMessage(text));
+        await OnSelected.InvokeAsync(new(ChatRole.User, text));
     }
 
     private IEnumerable<ResponseItem> ReduceMessages(IReadOnlyList<ResponseItem> responseItems)
