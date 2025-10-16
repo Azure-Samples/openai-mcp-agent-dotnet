@@ -23,26 +23,26 @@ param useApiManagement bool = false
 
 @description('The Azure OpenAI endpoint.')
 @secure()
-param openAIEndpoint string = ''
+param openAIEndpoint string
 @description('The Azure OpenAI API key.')
 @secure()
 param openAIApiKey string
 
 @description('The JWT audience for auth.')
 @secure()
-param jwtAudience string
+param jwtAudience string = ''
 @description('The JWT issuer for auth.')
 @secure()
-param jwtIssuer string
+param jwtIssuer string = ''
 @description('The JWT expiry for auth.')
 @secure()
-param jwtExpiry string
+param jwtExpiry string = ''
 @description('The JWT secret for auth.')
 @secure()
-param jwtSecret string
+param jwtSecret string = ''
 @description('The JWT token for auth.')
 @secure()
-param jwtToken string
+param jwtToken string = ''
 
 param mcpServerIngressPort int = 3000
 param mcpClientIngressPort int = 8080
@@ -84,6 +84,7 @@ module resources 'resources.bicep' = {
     jwtToken: jwtToken
     mcpServerIngressPort: mcpServerIngressPort
     mcpClientIngressPort: mcpClientIngressPort
+    mcpServerIngressExternal: true
   }
 }
 

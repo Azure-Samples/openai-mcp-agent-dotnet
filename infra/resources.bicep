@@ -21,29 +21,31 @@ param useApiManagement bool = false
 
 @description('The Azure OpenAI endpoint.')
 @secure()
-param openAIEndpoint string = ''
+param openAIEndpoint string
 @description('The Azure OpenAI API key.')
 @secure()
 param openAIApiKey string
 
 @description('The JWT audience for auth.')
 @secure()
-param jwtAudience string
+param jwtAudience string = ''
 @description('The JWT issuer for auth.')
 @secure()
-param jwtIssuer string
+param jwtIssuer string = ''
 @description('The JWT expiry for auth.')
 @secure()
-param jwtExpiry string
+param jwtExpiry string = ''
 @description('The JWT secret for auth.')
 @secure()
-param jwtSecret string
+param jwtSecret string = ''
 @description('The JWT token for auth.')
 @secure()
-param jwtToken string
+param jwtToken string = ''
 
 param mcpServerIngressPort int = 3000
 param mcpClientIngressPort int = 8080
+
+param mcpServerIngressExternal bool = false
 
 var abbrs = loadJsonContent('./abbreviations.json')
 var resourceToken = uniqueString(subscription().id, resourceGroup().id, location)
@@ -207,7 +209,7 @@ module mcpTodoServerApp 'br/public:avm/res/app/container-app:0.16.0' = {
   params: {
     name: 'mcptodo-serverapp'
     ingressTargetPort: mcpServerIngressPort
-    ingressExternal: true
+    ingressExternal: mcpServerIngressExternal
     scaleSettings: {
       minReplicas: 1
       maxReplicas: 10

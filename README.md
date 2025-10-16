@@ -43,8 +43,8 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
 
 ### Get Azure AI Foundry or GitHub Models
 
-- To run this app, you should have either [Azure AI Foundry](https://learn.microsoft.com/azure/ai-foundry/what-is-azure-ai-foundry) instance or [GitHub Models](https://github.com/marketplace?type=models).
-- If you use Azure AI Foundry, make sure you have the [GPT-5-mini models deployed](https://learn.microsoft.com/azure/ai-foundry/how-to/deploy-models-openai) deployed.
+- To run this app, you should have an [Azure AI Foundry](https://learn.microsoft.com/azure/ai-foundry/what-is-azure-ai-foundry) instance.
+- If you use Azure AI Foundry, make sure you have the [GPT-5-mini models](https://learn.microsoft.com/azure/ai-foundry/how-to/deploy-models-openai) deployed.
 - As a default, the deployed model name is `gpt-5-mini`.
 
 ### Get AI Agent App
@@ -81,7 +81,7 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
     }
     ```
 
-1. Add Azure OpenAI endpoint and API key. The Azure OpenAI endpoint MUST end with `openai.azure.com/`.
+1. **(Optional)** Add Azure OpenAI endpoint and API key. The Azure OpenAI endpoint MUST end with `openai.azure.com/`.
 
     ```bash
     dotnet user-secrets --project ./src/McpTodo.ClientApp set OpenAI:Endpoint {{AZURE_OPENAI_ENDPOINT}}
@@ -102,7 +102,7 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
     git clone https://github.com/Azure-Samples/mcp-container-ts.git ./src/McpTodo.ServerApp
     ```
 
-1. Set JWT token.
+1. **(Optional)** Set JWT token.
 
     ```bash
     # zsh/bash
@@ -126,7 +126,7 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
     azd auth login
     ```
 
-1. Add user secrets to azd environment.
+1. **(Optional)** Add user secrets to azd environment.
 
     ```bash
     # zsh/bash
@@ -148,7 +148,7 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
 
    > **NOTE**: If you want to use Azure Keyless access, please follow this document, [Use Azure OpenAI without keys](https://learn.microsoft.com/azure/developer/ai/keyless-connections).
 
-1. Add JWT token to azd environment.
+1. **(Optional)** Add JWT token to azd environment.
 
     ```bash
     # zsh/bash
@@ -177,7 +177,10 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
    >    azd env set USE_LOGIN false
    >    ```
    >
-   > 1. During the deployment, you will be asked to enter the Azure Subscription and location.
+   > 1. During the deployment,
+   >    - You will be asked to enter the Azure Subscription and location.
+   >    - You will also be asked to enter OpenAI Endpoint and OpenAI API Key, unless you have manually set both in the previous optional steps.
+   >    - If you want to use Azure Keyless access approach, please follow this document, [Use Azure OpenAI without keys](https://learn.microsoft.com/azure/developer/ai/keyless-connections).
 
 1. In the terminal, get the client app URL deployed. It might look like:
 

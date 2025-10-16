@@ -22,3 +22,39 @@ services:
       path: Dockerfile
       context: .
       remoteBuild: true
+
+hooks:
+  preprovision:
+    posix:
+      shell: sh
+      interactive: false
+      continueOnError: false
+      run: |
+        REPOSITORY_ROOT="$(git rev-parse --show-toplevel)"
+        SERVER_DIR="$REPOSITORY_ROOT/src/McpTodo.ServerApp"
+        CLIENT_DIR="$REPOSITORY_ROOT/src/McpTodo.ClientApp"
+
+        pushd "$SERVER_DIR"
+        npm install
+        npm run generate-token -- --admin
+        popd
+
+        ENV_DIR="$REPOSITORY_ROOT/.azure/$(azd env get-value AZURE_ENV_NAME)"
+        cat "$SERVER_DIR/.env" >> "$ENV_DIR/.env"
+
+    windows:
+      shell: pwsh
+      continueOnError: false
+      interactive: false
+      run: |
+        $REPOSITORY_ROOT = git rev-parse --show-toplevel
+        $SERVER_DIR = "$REPOSITORY_ROOT/src/McpTodo.ServerApp"
+        $CLIENT_DIR = "$REPOSITORY_ROOT/src/McpTodo.ClientApp"
+
+        pushd $SERVER_DIR
+        npm install
+        npm run generate-token -- --admin
+        popd
+
+        $ENV_DIR = "$REPOSITORY_ROOT/.azure/$(azd env get-value AZURE_ENV_NAME)"
+        Get-Content "$SERVER_DIR/.env" | Add-Content -Path "$ENV_DIR/.env" -Encoding utf8 -Force
