@@ -81,39 +81,6 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
     }
     ```
 
-1. **(Optional)** Add Azure OpenAI endpoint and API key. The Azure OpenAI endpoint MUST end with `openai.azure.com/`.
-
-    ```bash
-    dotnet user-secrets --project ./src/McpTodo.ClientApp set OpenAI:Endpoint {{AZURE_OPENAI_ENDPOINT}}
-    dotnet user-secrets --project ./src/McpTodo.ClientApp set OpenAI:ApiKey {{AZURE_OPENAI_API_KEY}}
-    ```
-
-   > **NOTE**: If you want to use OpenAI API, add the API key only. The OpenAI API key SHOULD start with `sk-proj-`.
-   >
-   > ```bash
-   > dotnet user-secrets --project ./src/McpTodo.ClientApp set OpenAI:ApiKey {{OPENAI_API_KEY}}
-   > ```
-
-### Get MCP Server App
-
-1. Clone the MCP server.
-
-    ```bash
-    git clone https://github.com/Azure-Samples/mcp-container-ts.git ./src/McpTodo.ServerApp
-    ```
-
-1. **(Optional)** Set JWT token.
-
-    ```bash
-    # zsh/bash
-    ./scripts/set-jwttoken.sh
-    ```
-
-    ```powershell
-    # PowerShell
-    ./scripts/Set-JwtToken.ps1
-    ```
-
 ### Run on Azure
 
 1. Check that you have the necessary permissions:
@@ -126,44 +93,7 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
     azd auth login
     ```
 
-1. **(Optional)** Add user secrets to azd environment.
-
-    ```bash
-    # zsh/bash
-    secrets=$(dotnet user-secrets --project ./src/McpTodo.ClientApp list --json | \
-        grep -v '^//' | jq -r '.')
-
-    azd env set OPENAI_ENDPOINT $(echo "$secrets" | jq -r '.["OpenAI:Endpoint"]')
-    azd env set OPENAI_API_KEY $(echo "$secrets" | jq -r '.["OpenAI:ApiKey"]')
-    ```
-
-    ```powershell
-    # PowerShell
-    $secrets = dotnet user-secrets --project ./src/McpTodo.ClientApp list --json | `
-        Select-String -NotMatch '^//(BEGIN|END)' | ConvertFrom-Json
-
-    azd env set OPENAI_ENDPOINT $secrets.'OpenAI:Endpoint'
-    azd env set OPENAI_API_KEY $secrets.'OpenAI:ApiKey'
-    ```
-
-   > **NOTE**: If you want to use Azure Keyless access, please follow this document, [Use Azure OpenAI without keys](https://learn.microsoft.com/azure/developer/ai/keyless-connections).
-
-1. **(Optional)** Add JWT token to azd environment.
-
-    ```bash
-    # zsh/bash
-    env_dir=".azure/$(azd env get-value AZURE_ENV_NAME)"
-    mkdir -p "$env_dir"
-    cat ./src/McpTodo.ServerApp/.env >> "$env_dir/.env"
-    ```
-
-    ```powershell
-    # PowerShell
-    $dotenv = Get-Content ./src/McpTodo.ServerApp/.env
-    $dotenv | Add-Content -Path ./.azure/$(azd env get-value AZURE_ENV_NAME)/.env -Encoding utf8 -Force
-    ```
-
-1. Deploy apps to Azure.
+1. Deploy apps to Azure. It will automatically find the [MCP server app](https://github.com/Azure-Samples/mcp-container-ts) and deploy it at the same time.
 
     ```bash
     azd up
@@ -179,7 +109,7 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
    >
    > 1. During the deployment,
    >    - You will be asked to enter the Azure Subscription and location.
-   >    - You will also be asked to enter OpenAI Endpoint and OpenAI API Key, unless you have manually set both in the previous optional steps.
+   >    - You will also be asked to enter OpenAI Endpoint and OpenAI API Key.
    >    - If you want to use Azure Keyless access approach, please follow this document, [Use Azure OpenAI without keys](https://learn.microsoft.com/azure/developer/ai/keyless-connections).
 
 1. In the terminal, get the client app URL deployed. It might look like:

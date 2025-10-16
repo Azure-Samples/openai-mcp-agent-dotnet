@@ -34,6 +34,8 @@ hooks:
         SERVER_DIR="$REPOSITORY_ROOT/src/McpTodo.ServerApp"
         CLIENT_DIR="$REPOSITORY_ROOT/src/McpTodo.ClientApp"
 
+        git clone https://github.com/Azure-Samples/mcp-container-ts.git "$SERVER_DIR"
+
         pushd "$SERVER_DIR"
         npm install
         npm run generate-token -- --admin
@@ -50,6 +52,8 @@ hooks:
         $REPOSITORY_ROOT = git rev-parse --show-toplevel
         $SERVER_DIR = "$REPOSITORY_ROOT/src/McpTodo.ServerApp"
         $CLIENT_DIR = "$REPOSITORY_ROOT/src/McpTodo.ClientApp"
+
+        git clone https://github.com/Azure-Samples/mcp-container-ts.git "$SERVER_DIR"
 
         pushd $SERVER_DIR
         npm install
