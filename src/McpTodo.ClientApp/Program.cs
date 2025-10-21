@@ -13,7 +13,7 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddScoped<OpenAIResponseClient>(sp =>
 {
-    var responseClient = new OpenAIResponseClientBuilder(config)
+    var responseClient = new OpenAIResponseClientBuilder(config, builder.Environment.IsDevelopment())
                              .Build();
     return responseClient;
 });

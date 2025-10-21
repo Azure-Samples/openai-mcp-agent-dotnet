@@ -31,13 +31,6 @@ param principalId string
 @description('Whether to use the built-in login feature for the application or not')
 param useLogin bool = true
 
-@description('The Azure OpenAI endpoint.')
-@secure()
-param openAIEndpoint string
-@description('The Azure OpenAI API key.')
-@secure()
-param openAIApiKey string
-
 @description('The SKU for the Azure OpenAI resource')
 @allowed([
   'S0'
@@ -96,6 +89,7 @@ module openAI 'br/public:avm/res/cognitive-services/account:0.13.2' = {
     kind: 'OpenAI'
     sku: aifSkuName
     customSubDomainName: '${abbrs.cognitiveServicesAccounts}${resourceToken}'
+    disableLocalAuth: false
     networkAcls: {
       defaultAction: 'Allow'
       bypass: 'AzureServices'
@@ -122,9 +116,9 @@ module openAI 'br/public:avm/res/cognitive-services/account:0.13.2' = {
     }
     roleAssignments: [
       {
-        principalId: mcpTodoClientAppIdentity.outputs.resourceId
+        principalId: mcpTodoClientAppIdentity.outputs.principalId
         roleDefinitionIdOrName: 'Cognitive Services OpenAI User'
-        principalType: 'User'
+        principalType: 'ServicePrincipal'
       }
     ]
   }
@@ -344,6 +338,10 @@ module mcpTodoClientApp 'br/public:avm/res/app/container-app:0.16.0' = {
     }
     secrets: [
       {
+        name: 'openai-api-key'
+        value: listKeys(resourceId('Microsoft.CognitiveServices/accounts', '${abbrs.cognitiveServicesAccounts}${resourceToken}'), '2025-07-01-preview').key1
+      }
+      {
         name: 'jwt-token'
         value: jwtToken
       }
@@ -376,6 +374,10 @@ module mcpTodoClientApp 'br/public:avm/res/app/container-app:0.16.0' = {
           {
             name: 'OpenAI__Endpoint'
             value: openAI.outputs.endpoint
+          }
+          {
+            name: 'OpenAI__ApiKey'
+            secretRef: 'openai-api-key'
           }
           {
             name: 'OpenAI__DeploymentName'

@@ -38,13 +38,6 @@ param principalId string
 @description('Whether to use the built-in login feature for the application or not')
 param useLogin bool = true
 
-@description('The Azure OpenAI endpoint.')
-@secure()
-param openAIEndpoint string
-@description('The Azure OpenAI API key.')
-@secure()
-param openAIApiKey string
-
 @description('The SKU for the Azure OpenAI resource')
 @allowed([
   'S0'
@@ -104,8 +97,6 @@ module resources 'resources.bicep' = {
     mcpTodoServerAppExists: mcpTodoServerAppExists
     mcpTodoClientAppExists: mcpTodoClientAppExists
     useLogin: useLogin
-    openAIEndpoint: openAIEndpoint
-    openAIApiKey: openAIApiKey
     aifSkuName: aifSkuName
     gptModelName: gptModelName
     gptModelVersion: gptModelVersion

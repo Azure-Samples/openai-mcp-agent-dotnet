@@ -4,6 +4,7 @@ using System.ClientModel;
 using System.Data.Common;
 
 using Azure.AI.OpenAI;
+using Azure.Core;
 using Azure.Identity;
 
 using OpenAI;
@@ -11,9 +12,10 @@ using OpenAI.Responses;
 
 namespace McpTodo.ClientApp.Builders;
 
-public class OpenAIResponseClientBuilder(IConfiguration config)
+public class OpenAIResponseClientBuilder(IConfiguration config, bool development)
 {
     private readonly IConfiguration _config = config ?? throw new ArgumentNullException(nameof(config));
+    private readonly bool _development = development;
 
     public OpenAIResponseClient Build()
     {
@@ -49,7 +51,7 @@ public class OpenAIResponseClientBuilder(IConfiguration config)
         return (uri, isAzure);
     }
 
-    private static OpenAIResponseClient BuildFromConnectionString(string? connectionString, string? model)
+    private OpenAIResponseClient BuildFromConnectionString(string? connectionString, string? model)
     {
         ArgumentNullException.ThrowIfNullOrWhiteSpace(connectionString);
         ArgumentNullException.ThrowIfNullOrWhiteSpace(model);
@@ -64,8 +66,12 @@ public class OpenAIResponseClientBuilder(IConfiguration config)
 
         if (parts.TryGetValue("Key", out var keyVal) == false || keyVal is not string key || string.IsNullOrWhiteSpace(key) == true)
         {
+            TokenCredential tokenCredential = this._development == true
+                ? new DefaultAzureCredential()
+                : new ManagedIdentityCredential(ManagedIdentityId.FromUserAssignedClientId(this._config["AZURE_CLIENT_ID"]));
+
             return isAzure == true
-                ? new AzureOpenAIClient(uri, new DefaultAzureCredential()).GetOpenAIResponseClient(model)
+                ? new AzureOpenAIClient(uri, tokenCredential).GetOpenAIResponseClient(model)
                 : throw new InvalidOperationException("Missing Key in connection string.");
         }
 
@@ -75,7 +81,7 @@ public class OpenAIResponseClientBuilder(IConfiguration config)
         return new OpenAIResponseClient(model, credential, options);
     }
 
-    private static OpenAIResponseClient BuildFromEndpoint(string? endpoint, string? apiKey, string? model)
+    private OpenAIResponseClient BuildFromEndpoint(string? endpoint, string? apiKey, string? model)
     {
         ArgumentNullException.ThrowIfNullOrWhiteSpace(endpoint);
         ArgumentNullException.ThrowIfNullOrWhiteSpace(model);
@@ -84,8 +90,12 @@ public class OpenAIResponseClientBuilder(IConfiguration config)
 
         if (string.IsNullOrWhiteSpace(apiKey) == true)
         {
+            TokenCredential tokenCredential = this._development == true
+                ? new DefaultAzureCredential()
+                : new ManagedIdentityCredential(ManagedIdentityId.FromUserAssignedClientId(this._config["AZURE_CLIENT_ID"]));
+
             return isAzure == true
-                ? new AzureOpenAIClient(uri, new DefaultAzureCredential()).GetOpenAIResponseClient(model)
+                ? new AzureOpenAIClient(uri, tokenCredential).GetOpenAIResponseClient(model)
                 : throw new InvalidOperationException("Missing API key in configuration.");
         }
 
