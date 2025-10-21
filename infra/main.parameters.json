@@ -20,6 +20,9 @@
       "useLogin": {
         "value": "${USE_LOGIN=true}"
       },
+      "gptModelName": {
+        "value": "${GPT_MODEL_NAME=gpt-5-mini}"
+      },
       "mcpServerIngressPort": {
         "value": "${MCP_SERVER_INGRESS_PORT=3000}"
       },

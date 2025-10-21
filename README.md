@@ -70,17 +70,6 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
 
    > **NOTE**: You'll be asked to enter an environment name, which will be the name of your Azure Resource Group. For example, the environment name might be `openai-mcp-agent`.
 
-1. Make sure that your deployed model name is `gpt-5-mini`. If your deployed model is different, update `src/McpTodo.ClientApp/appsettings.json`.
-
-    ```jsonc
-    {
-      "OpenAI": {
-        // Make sure this is the right deployment name.
-        "DeploymentName": "gpt-5-mini"
-      }
-    }
-    ```
-
 ### Run on Azure
 
 1. Check that you have the necessary permissions:
@@ -107,10 +96,14 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
    >    azd env set USE_LOGIN false
    >    ```
    >
+   > 1. By default, the agent uses `gpt-5-mini`. You can change it to something else by setting:
+   >
+   >    ```bash
+   >    azd env set GPT_MODEL_NAME <azure-openai-model-name>
+   >    ```
+   >
    > 1. During the deployment,
-   >    - You will be asked to enter the Azure Subscription and location.
-   >    - You will also be asked to enter OpenAI Endpoint and OpenAI API Key.
-   >    - If you want to use Azure Keyless access approach, please follow this document, [Use Azure OpenAI without keys](https://learn.microsoft.com/azure/developer/ai/keyless-connections).
+   >    - You will be asked to enter the Azure Subscription and two locations - one for Azure AI Foundry and the other for the rest of resources.
 
 1. In the terminal, get the client app URL deployed. It might look like:
 
