@@ -66,12 +66,8 @@ public class OpenAIResponseClientBuilder(IConfiguration config, bool development
 
         if (parts.TryGetValue("Key", out var keyVal) == false || keyVal is not string key || string.IsNullOrWhiteSpace(key) == true)
         {
-            TokenCredential tokenCredential = this._development == true
-                ? new DefaultAzureCredential()
-                : new ManagedIdentityCredential(ManagedIdentityId.FromUserAssignedClientId(this._config["AZURE_CLIENT_ID"]));
-
             return isAzure == true
-                ? new AzureOpenAIClient(uri, tokenCredential).GetOpenAIResponseClient(model)
+                ? new AzureOpenAIClient(uri, GetTokenCredential(this._config, this._development)).GetOpenAIResponseClient(model)
                 : throw new InvalidOperationException("Missing Key in connection string.");
         }
 
@@ -90,12 +86,8 @@ public class OpenAIResponseClientBuilder(IConfiguration config, bool development
 
         if (string.IsNullOrWhiteSpace(apiKey) == true)
         {
-            TokenCredential tokenCredential = this._development == true
-                ? new DefaultAzureCredential()
-                : new ManagedIdentityCredential(ManagedIdentityId.FromUserAssignedClientId(this._config["AZURE_CLIENT_ID"]));
-
             return isAzure == true
-                ? new AzureOpenAIClient(uri, tokenCredential).GetOpenAIResponseClient(model)
+                ? new AzureOpenAIClient(uri, GetTokenCredential(this._config, this._development)).GetOpenAIResponseClient(model)
                 : throw new InvalidOperationException("Missing API key in configuration.");
         }
 
@@ -103,5 +95,12 @@ public class OpenAIResponseClientBuilder(IConfiguration config, bool development
         var options = new OpenAIClientOptions { Endpoint = uri };
 
         return new OpenAIResponseClient(model, credential, options);
+    }
+
+    private static TokenCredential GetTokenCredential(IConfiguration config, bool development)
+    {
+        return development == true
+            ? new DefaultAzureCredential()
+            : new ManagedIdentityCredential(ManagedIdentityId.FromUserAssignedClientId(config["AZURE_CLIENT_ID"]));
     }
 }
