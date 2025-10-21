@@ -9,6 +9,26 @@ param environmentName string
 @description('Primary location for all resources')
 param location string
 
+@minLength(1)
+@description('Primary location for Azure AI Foundry resources')
+@allowed([
+  'australiaeast'
+  'eastus'
+  'eastus2'
+  'japaneast'
+  'koreacentral'
+  'southindia'
+  'swedencentral'
+  'switzerlandnorth'
+  'uksouth'
+])
+@metadata({
+  azd: {
+    type: 'location'
+  }
+})
+param aifLocation string
+
 param mcpTodoServerAppExists bool
 param mcpTodoClientAppExists bool
 
@@ -18,15 +38,24 @@ param principalId string
 @description('Whether to use the built-in login feature for the application or not')
 param useLogin bool = true
 
-@description('Whether to use API Management or not')
-param useApiManagement bool = false
-
 @description('The Azure OpenAI endpoint.')
 @secure()
 param openAIEndpoint string
 @description('The Azure OpenAI API key.')
 @secure()
 param openAIApiKey string
+
+@description('The SKU for the Azure OpenAI resource')
+@allowed([
+  'S0'
+])
+param aifSkuName string = 'S0'
+@description('GPT model to deploy')
+param gptModelName string = 'gpt-5-mini'
+@description('GPT model version')
+param gptModelVersion string = '2025-08-07'
+@description('GPT deployment capacity')
+param gptCapacity int = 10
 
 @description('The JWT audience for auth.')
 @secure()
@@ -69,14 +98,18 @@ module resources 'resources.bicep' = {
   params: {
     environmentName: environmentName
     location: location
+    aifLocation: aifLocation
     tags: tags
     principalId: principalId
     mcpTodoServerAppExists: mcpTodoServerAppExists
     mcpTodoClientAppExists: mcpTodoClientAppExists
     useLogin: useLogin
-    useApiManagement: useApiManagement
     openAIEndpoint: openAIEndpoint
     openAIApiKey: openAIApiKey
+    aifSkuName: aifSkuName
+    gptModelName: gptModelName
+    gptModelVersion: gptModelVersion
+    gptCapacity: gptCapacity
     jwtAudience: jwtAudience
     jwtIssuer: jwtIssuer
     jwtExpiry: jwtExpiry

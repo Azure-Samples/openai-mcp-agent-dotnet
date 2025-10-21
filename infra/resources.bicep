@@ -4,6 +4,21 @@ param environmentName string
 @description('The location used for all deployed resources')
 param location string = resourceGroup().location
 
+@minLength(1)
+@description('The location used for Azure AI Foundry resources')
+@allowed([
+  'australiaeast'
+  'eastus'
+  'eastus2'
+  'japaneast'
+  'koreacentral'
+  'southindia'
+  'swedencentral'
+  'switzerlandnorth'
+  'uksouth'
+])
+param aifLocation string
+
 @description('Tags that will be applied to all resources')
 param tags object = {}
 
@@ -16,15 +31,24 @@ param principalId string
 @description('Whether to use the built-in login feature for the application or not')
 param useLogin bool = true
 
-@description('Whether to use API Management or not')
-param useApiManagement bool = false
-
 @description('The Azure OpenAI endpoint.')
 @secure()
 param openAIEndpoint string
 @description('The Azure OpenAI API key.')
 @secure()
 param openAIApiKey string
+
+@description('The SKU for the Azure OpenAI resource')
+@allowed([
+  'S0'
+])
+param aifSkuName string = 'S0'
+@description('GPT model to deploy')
+param gptModelName string = 'gpt-5-mini'
+@description('GPT model version')
+param gptModelVersion string = '2025-08-07'
+@description('GPT deployment capacity')
+param gptCapacity int = 10
 
 @description('The JWT audience for auth.')
 @secure()
@@ -62,6 +86,50 @@ module monitoring 'br/public:avm/ptn/azd/monitoring:0.1.0' = {
   }
 }
 
+// Azure OpenAI resource
+module openAI 'br/public:avm/res/cognitive-services/account:0.13.2' = {
+  name: 'openai'
+  params: {
+    name: '${abbrs.cognitiveServicesAccounts}${resourceToken}'
+    location: aifLocation
+    tags: tags
+    kind: 'OpenAI'
+    sku: aifSkuName
+    customSubDomainName: '${abbrs.cognitiveServicesAccounts}${resourceToken}'
+    networkAcls: {
+      defaultAction: 'Allow'
+      bypass: 'AzureServices'
+    }
+    deployments: [
+      {
+        name: gptModelName
+        model: {
+          format: 'OpenAI'
+          name: gptModelName
+          version: gptModelVersion
+        }
+        sku: {
+          name: 'GlobalStandard'
+          capacity: gptCapacity
+        }
+      }
+    ]
+    managedIdentities: {
+      systemAssigned: false
+      userAssignedResourceIds: [
+        mcpTodoClientAppIdentity.outputs.resourceId
+      ]
+    }
+    roleAssignments: [
+      {
+        principalId: mcpTodoClientAppIdentity.outputs.resourceId
+        roleDefinitionIdOrName: 'Cognitive Services OpenAI User'
+        principalType: 'User'
+      }
+    ]
+  }
+}
+
 // Storage account
 module storageAccount 'br/public:avm/res/storage/storage-account:0.15.0' = if (useLogin == true) {
   name: 'storageAccount'
@@ -80,65 +148,6 @@ module storageAccount 'br/public:avm/res/storage/storage-account:0.15.0' = if (u
       ]
     }
   }
-}
-
-// API Management
-module apiManagement 'br/public:avm/res/api-management/service:0.9.1' = if (useApiManagement == true) {
-  name: 'apimanagement'
-  params: {
-    name: '${abbrs.apiManagementService}${resourceToken}'
-    location: location
-    tags: tags
-    publisherName: 'MCP Todo Agent'
-    publisherEmail: 'mcp-todo@contoso.com'
-    sku: 'BasicV2'
-    skuCapacity: 1
-    managedIdentities: {
-      systemAssigned: false
-      userAssignedResourceIds: [
-        mcpTodoClientAppIdentity.outputs.resourceId
-      ]
-    }
-  }
-}
-
-module apimProduct './modules/apim-product.bicep' = if (useApiManagement == true) {
-  name: 'apimanagement-product'
-  params: {
-    name: apiManagement.outputs.name
-    productName: 'default'
-    productDisplayName: 'default'
-    productDescription: 'Default product'
-    productSubscriptionRequired: false
-  }
-}
-
-module apimSubscription './modules/apim-subscription.bicep' = if (useApiManagement == true) {
-  name: 'apimanagement-subscription'
-  params: {
-    name: apiManagement.outputs.name
-    productName: apimProduct.outputs.name
-    subscriptionName: 'default'
-    subscriptionDisplayName: 'Default subscription'
-  }
-}
-
-module apimApi './modules/apim-api.bicep' = if (useApiManagement == true) {
-  name: 'apimanagement-api'
-  params: {
-    name: apiManagement.outputs.name
-    apiName: 'mcp-server'
-    apiDisplayName: 'MCP Server'
-    apiDescription: 'API for MCP Server'
-    apiServiceUrl: 'https://${mcpTodoServerApp.outputs.fqdn}'
-    apiPath: 'mcp-server'
-    apiSubscriptionRequired: false
-    apiFormat: 'openapi+json'
-    apiValue: loadTextContent('./apis/openapi.json')
-  }
-  dependsOn: [
-    apimProduct
-  ]
 }
 
 // Container registry
@@ -335,14 +344,6 @@ module mcpTodoClientApp 'br/public:avm/res/app/container-app:0.16.0' = {
     }
     secrets: [
       {
-        name: 'openai-endpoint'
-        value: openAIEndpoint
-      }
-      {
-        name: 'openai-api-key'
-        value: openAIApiKey
-      }
-      {
         name: 'jwt-token'
         value: jwtToken
       }
@@ -370,15 +371,15 @@ module mcpTodoClientApp 'br/public:avm/res/app/container-app:0.16.0' = {
           }
           {
             name: 'McpServers__TodoList'
-            value: useApiManagement ? 'https://${apiManagement.outputs.name}.azure-api.net' : 'https://${mcpTodoServerApp.outputs.fqdn}'
+            value: 'https://${mcpTodoServerApp.outputs.fqdn}'
           }
           {
             name: 'OpenAI__Endpoint'
-            secretRef: 'openai-endpoint'
+            value: openAI.outputs.endpoint
           }
           {
-            name: 'OpenAI__ApiKey'
-            secretRef: 'openai-api-key'
+            name: 'OpenAI__DeploymentName'
+            value: gptModelName
           }
           {
             name: 'McpServers__JWT__Token'
