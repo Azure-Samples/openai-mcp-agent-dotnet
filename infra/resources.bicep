@@ -80,47 +80,39 @@ module monitoring 'br/public:avm/ptn/azd/monitoring:0.1.0' = {
 }
 
 // Azure OpenAI resource
-module openAI 'br/public:avm/res/cognitive-services/account:0.13.2' = {
-  name: 'openai'
-  params: {
-    name: '${abbrs.cognitiveServicesAccounts}${resourceToken}'
-    location: aifLocation
-    tags: tags
-    kind: 'OpenAI'
-    sku: aifSkuName
+resource openAI 'Microsoft.CognitiveServices/accounts@2025-07-01-preview' = {
+  name: '${abbrs.cognitiveServicesAccounts}${resourceToken}'
+  location: aifLocation
+  kind: 'OpenAI'
+  sku: {
+    name: aifSkuName
+  }
+  properties: {
     customSubDomainName: '${abbrs.cognitiveServicesAccounts}${resourceToken}'
+    publicNetworkAccess: 'Enabled'
     disableLocalAuth: false
     networkAcls: {
       defaultAction: 'Allow'
       bypass: 'AzureServices'
     }
-    deployments: [
-      {
-        name: gptModelName
-        model: {
-          format: 'OpenAI'
-          name: gptModelName
-          version: gptModelVersion
-        }
-        sku: {
-          name: 'GlobalStandard'
-          capacity: gptCapacity
-        }
-      }
-    ]
-    managedIdentities: {
-      systemAssigned: false
-      userAssignedResourceIds: [
-        mcpTodoClientAppIdentity.outputs.resourceId
-      ]
+  }
+  tags: tags
+}
+
+// GPT Model Deployment
+resource gptModelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2025-07-01-preview' = {
+  name: gptModelName
+  parent: openAI
+  properties: {
+    model: {
+      format: 'OpenAI'
+      name: gptModelName
+      version: gptModelVersion
     }
-    roleAssignments: [
-      {
-        principalId: mcpTodoClientAppIdentity.outputs.principalId
-        roleDefinitionIdOrName: 'Cognitive Services OpenAI User'
-        principalType: 'ServicePrincipal'
-      }
-    ]
+  }
+  sku: {
+    name: 'GlobalStandard'
+    capacity: gptCapacity
   }
 }
 
@@ -339,7 +331,7 @@ module mcpTodoClientApp 'br/public:avm/res/app/container-app:0.16.0' = {
     secrets: [
       {
         name: 'openai-api-key'
-        value: listKeys(resourceId('Microsoft.CognitiveServices/accounts', '${abbrs.cognitiveServicesAccounts}${resourceToken}'), '2025-07-01-preview').key1
+        value: openAI.listKeys().key1
       }
       {
         name: 'jwt-token'
@@ -373,7 +365,7 @@ module mcpTodoClientApp 'br/public:avm/res/app/container-app:0.16.0' = {
           }
           {
             name: 'OpenAI__Endpoint'
-            value: openAI.outputs.endpoint
+            value: openAI.properties.endpoint
           }
           {
             name: 'OpenAI__ApiKey'
@@ -381,7 +373,7 @@ module mcpTodoClientApp 'br/public:avm/res/app/container-app:0.16.0' = {
           }
           {
             name: 'OpenAI__DeploymentName'
-            value: gptModelName
+            value: gptModelDeployment.properties.model.name
           }
           {
             name: 'McpServers__JWT__Token'
