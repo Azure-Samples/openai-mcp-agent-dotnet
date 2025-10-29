@@ -4,7 +4,7 @@ using System.ClientModel;
 using System.ClientModel.Primitives;
 using System.Data.Common;
 
-using Azure.AI.OpenAI;
+// using Azure.AI.OpenAI;
 using Azure.Core;
 using Azure.Identity;
 
@@ -77,18 +77,15 @@ public class OpenAIResponseClientBuilder(IConfiguration config, ILoggerFactory l
         if (parts.TryGetValue("Key", out var keyVal) == false || keyVal is not string key || string.IsNullOrWhiteSpace(key) == true)
         {
             return isAzure == true
-                ? new AzureOpenAIClient(uri, GetTokenCredential(this._config, this._development), GetAzureOpenAIClientOptions(openAIClientLoggingOptions)).GetOpenAIResponseClient(model)
+                ? new OpenAIClient(
+                    GetBearerTokenPolicy(this._config, this._development),
+                    GetOpenAIClientOptions(uri, openAIClientLoggingOptions)).GetOpenAIResponseClient(model)
                 : throw new InvalidOperationException("Missing Key in connection string.");
         }
 
         var credential = new ApiKeyCredential(key.Trim());
-        var openAIClientOptions = new OpenAIClientOptions
-        {
-            Endpoint = uri,
-            ClientLoggingOptions = openAIClientLoggingOptions
-        };
 
-        return new OpenAIResponseClient(model, credential, openAIClientOptions);
+        return new OpenAIResponseClient(model, credential, GetOpenAIClientOptions(uri, openAIClientLoggingOptions));
     }
 
     private OpenAIResponseClient BuildFromEndpoint(string? endpoint, string? apiKey, string? model)
@@ -109,21 +106,23 @@ public class OpenAIResponseClientBuilder(IConfiguration config, ILoggerFactory l
         if (string.IsNullOrWhiteSpace(apiKey) == true)
         {
             return isAzure == true
-                ? new AzureOpenAIClient(
-                      uri, 
-                      GetTokenCredential(this._config, this._development),
-                      GetAzureOpenAIClientOptions(openAIClientLoggingOptions)).GetOpenAIResponseClient(model)
+                ? new OpenAIClient(
+                      GetBearerTokenPolicy(this._config, this._development),
+                      GetOpenAIClientOptions(uri, openAIClientLoggingOptions)).GetOpenAIResponseClient(model)
                 : throw new InvalidOperationException("Missing API key in configuration.");
         }
 
         var credential = new ApiKeyCredential(apiKey);
-        var openAIClientOptions = new OpenAIClientOptions
-        {
-            Endpoint = uri,
-            ClientLoggingOptions = openAIClientLoggingOptions
-        };
 
-        return new OpenAIResponseClient(model, credential, openAIClientOptions);
+        return new OpenAIResponseClient(model, credential, GetOpenAIClientOptions(uri, openAIClientLoggingOptions));
+    }
+
+    private static BearerTokenPolicy GetBearerTokenPolicy(IConfiguration config, bool development)
+    {
+        TokenCredential credential = GetTokenCredential(config, development);
+        BearerTokenPolicy tokenPolicy = new(credential, "https://cognitiveservices.azure.com/.default");
+
+        return tokenPolicy;
     }
 
     private static TokenCredential GetTokenCredential(IConfiguration config, bool development)
@@ -133,8 +132,9 @@ public class OpenAIResponseClientBuilder(IConfiguration config, ILoggerFactory l
             : new ManagedIdentityCredential(ManagedIdentityId.FromUserAssignedClientId(config["AZURE_CLIENT_ID"]));
     }
 
-    private static AzureOpenAIClientOptions GetAzureOpenAIClientOptions(ClientLoggingOptions options) => new()
+    private static OpenAIClientOptions GetOpenAIClientOptions(Uri uri, ClientLoggingOptions options) => new()
     {
+        Endpoint = uri,
         ClientLoggingOptions = options
     };
 }
