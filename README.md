@@ -108,7 +108,7 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
    >    azd env set AOAI_USE_API_KEY true
    >    ```
    >
-   > 1. By default, the the agent is production mode. You can change it to the development mode to either `Both` or `Client` that shows more detailed logs by setting:
+   > 1. By default, the agent is production mode. You can change it to the development mode to either `Both` or `Client` that shows more detailed logs by setting:
    >
    >    ```bash
    >    azd env set ENABLE_DEVELOPMENT_MODE Both
