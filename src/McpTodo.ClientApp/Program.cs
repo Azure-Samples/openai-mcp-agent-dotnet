@@ -14,7 +14,7 @@ builder.Services.AddRazorComponents()
 builder.Services.AddScoped<OpenAIResponseClient>(sp =>
 {
     var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
-    var responseClient = new OpenAIResponseClientBuilder(config, loggerFactory, builder.Environment.IsDevelopment())
+    var responseClient = new OpenAIResponseClientBuilder(config, loggerFactory)
                              .Build();
     return responseClient;
 });

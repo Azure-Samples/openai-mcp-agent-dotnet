@@ -10,7 +10,6 @@
 
   <ItemGroup>
     <PackageReference Include="Azure.Identity" Version="1.*" />
-    <!-- <PackageReference Include="Azure.Projects.AI" Version="1.*-*" /> -->
     <PackageReference Include="OpenAI" Version="2.*" />
     <PackageReference Include="System.Linq.Async" Version="6.*" />
   </ItemGroup>

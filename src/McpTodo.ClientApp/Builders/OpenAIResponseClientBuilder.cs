@@ -4,7 +4,6 @@ using System.ClientModel;
 using System.ClientModel.Primitives;
 using System.Data.Common;
 
-// using Azure.AI.OpenAI;
 using Azure.Core;
 using Azure.Identity;
 
@@ -13,11 +12,10 @@ using OpenAI.Responses;
 
 namespace McpTodo.ClientApp.Builders;
 
-public class OpenAIResponseClientBuilder(IConfiguration config, ILoggerFactory loggerFactory, bool development)
+public class OpenAIResponseClientBuilder(IConfiguration config, ILoggerFactory loggerFactory)
 {
     private readonly IConfiguration _config = config ?? throw new ArgumentNullException(nameof(config));
     private readonly ILoggerFactory _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
-    private readonly bool _development = development;
 
     public OpenAIResponseClient Build()
     {
@@ -25,15 +23,16 @@ public class OpenAIResponseClientBuilder(IConfiguration config, ILoggerFactory l
         var endpoint = this._config["OpenAI:Endpoint"]?.Trim();
         var apiKey = this._config["OpenAI:ApiKey"]?.Trim();
         var model = this._config["OpenAI:DeploymentName"]?.Trim() ?? "gpt-5-mini";
+        var enableLogging = bool.TryParse(this._config["OpenAI:EnableLogging"]?.Trim() ?? string.Empty, out var logging) && logging;
 
         if (string.IsNullOrWhiteSpace(connectionString) == false)
         {
-            return BuildFromConnectionString(connectionString, model);
+            return BuildFromConnectionString(connectionString, model, enableLogging);
         }
 
         if (string.IsNullOrWhiteSpace(endpoint) == false)
         {
-            return BuildFromEndpoint(endpoint, apiKey, model);
+            return BuildFromEndpoint(endpoint, apiKey, model, enableLogging);
         }
 
         if (string.IsNullOrWhiteSpace(apiKey) == false)
@@ -53,7 +52,7 @@ public class OpenAIResponseClientBuilder(IConfiguration config, ILoggerFactory l
         return (uri, isAzure);
     }
 
-    private OpenAIResponseClient BuildFromConnectionString(string? connectionString, string? model)
+    private OpenAIResponseClient BuildFromConnectionString(string? connectionString, string? model, bool developmentMode)
     {
         ArgumentNullException.ThrowIfNullOrWhiteSpace(connectionString);
         ArgumentNullException.ThrowIfNullOrWhiteSpace(model);
@@ -69,16 +68,16 @@ public class OpenAIResponseClientBuilder(IConfiguration config, ILoggerFactory l
         var openAIClientLoggingOptions = new ClientLoggingOptions()
         {
             LoggerFactory  = this._loggerFactory,
-            EnableLogging = true,
-            EnableMessageLogging = true,
-            EnableMessageContentLogging = true
+            EnableLogging = developmentMode,
+            EnableMessageLogging = developmentMode,
+            EnableMessageContentLogging = developmentMode
         };
 
         if (parts.TryGetValue("Key", out var keyVal) == false || keyVal is not string key || string.IsNullOrWhiteSpace(key) == true)
         {
             return isAzure == true
                 ? new OpenAIClient(
-                    GetBearerTokenPolicy(this._config, this._development),
+                    GetBearerTokenPolicy(this._config, developmentMode),
                     GetOpenAIClientOptions(uri, openAIClientLoggingOptions)).GetOpenAIResponseClient(model)
                 : throw new InvalidOperationException("Missing Key in connection string.");
         }
@@ -88,7 +87,7 @@ public class OpenAIResponseClientBuilder(IConfiguration config, ILoggerFactory l
         return new OpenAIResponseClient(model, credential, GetOpenAIClientOptions(uri, openAIClientLoggingOptions));
     }
 
-    private OpenAIResponseClient BuildFromEndpoint(string? endpoint, string? apiKey, string? model)
+    private OpenAIResponseClient BuildFromEndpoint(string? endpoint, string? apiKey, string? model, bool developmentMode)
     {
         ArgumentNullException.ThrowIfNullOrWhiteSpace(endpoint);
         ArgumentNullException.ThrowIfNullOrWhiteSpace(model);
@@ -98,16 +97,16 @@ public class OpenAIResponseClientBuilder(IConfiguration config, ILoggerFactory l
         var openAIClientLoggingOptions = new ClientLoggingOptions()
         {
             LoggerFactory  = this._loggerFactory,
-            EnableLogging = true,
-            EnableMessageLogging = true,
-            EnableMessageContentLogging = true
+            EnableLogging = developmentMode,
+            EnableMessageLogging = developmentMode,
+            EnableMessageContentLogging = developmentMode
         };
 
         if (string.IsNullOrWhiteSpace(apiKey) == true)
         {
             return isAzure == true
                 ? new OpenAIClient(
-                      GetBearerTokenPolicy(this._config, this._development),
+                      GetBearerTokenPolicy(this._config, developmentMode),
                       GetOpenAIClientOptions(uri, openAIClientLoggingOptions)).GetOpenAIResponseClient(model)
                 : throw new InvalidOperationException("Missing API key in configuration.");
         }
@@ -117,17 +116,17 @@ public class OpenAIResponseClientBuilder(IConfiguration config, ILoggerFactory l
         return new OpenAIResponseClient(model, credential, GetOpenAIClientOptions(uri, openAIClientLoggingOptions));
     }
 
-    private static BearerTokenPolicy GetBearerTokenPolicy(IConfiguration config, bool development)
+    private static BearerTokenPolicy GetBearerTokenPolicy(IConfiguration config, bool developmentMode)
     {
-        TokenCredential credential = GetTokenCredential(config, development);
+        TokenCredential credential = GetTokenCredential(config, developmentMode);
         BearerTokenPolicy tokenPolicy = new(credential, "https://cognitiveservices.azure.com/.default");
 
         return tokenPolicy;
     }
 
-    private static TokenCredential GetTokenCredential(IConfiguration config, bool development)
+    private static TokenCredential GetTokenCredential(IConfiguration config, bool developmentMode)
     {
-        return development == true
+        return developmentMode == true
             ? new DefaultAzureCredential()
             : new ManagedIdentityCredential(ManagedIdentityId.FromUserAssignedClientId(config["AZURE_CLIENT_ID"]));
     }
