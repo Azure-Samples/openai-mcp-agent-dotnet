@@ -102,22 +102,34 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
    >    azd env set GPT_MODEL_NAME <azure-openai-model-name>
    >    ```
    >
-   > 1. By default, the MCP server app is production mode. You can change it to the development mode that shows more detailed logs by setting:
+   > 1. By default, the agent uses the [keyless approach](https://learn.microsoft.com/azure/developer/ai/how-to/switching-endpoints?tabs=azure-openai&pivots=dotnet#microsoft-entra-authentication-1) for Azure OpenAI authentication. You can change it to use [Azure OpenAI API key](https://learn.microsoft.com/azure/developer/ai/how-to/switching-endpoints?tabs=azure-openai&pivots=dotnet#api-key-authentication) by setting:
    >
    >    ```bash
-   >    azd env set ENABLE_MCP_SERVER_DEVELOPMENT_MODE true
+   >    azd env set AOAI_USE_API_KEY true
+   >    ```
+   >
+   > 1. By default, the agent is production mode. You can change it to the development mode to either `Both` or `Client` that shows more detailed logs by setting:
+   >
+   >    ```bash
+   >    azd env set ENABLE_DEVELOPMENT_MODE Both
+   >    ```
+   >
+   > 1. By default, the MCP server app is production mode. You can change it to the development mode to either `Both` or `Server` that shows more detailed logs by setting:
+   >
+   >    ```bash
+   >    azd env set ENABLE_DEVELOPMENT_MODE Both
    >    ```
    >
    > 1. During the deployment,
    >    - You will be asked to enter the Azure Subscription and two locations - one for Azure AI Foundry and the other for the rest of resources.
 
-1. In the terminal, get the client app URL deployed. It might look like:
+2. In the terminal, get the client app URL deployed. It might look like:
 
     ```bash
     https://mcptodo-clientapp.{{some-random-string}}.{{location}}.azurecontainerapps.io/
     ```
 
-1. Navigate to the client app URL, log-in to the app and enter prompts like:
+3. Navigate to the client app URL, log-in to the app and enter prompts like:
 
     ```text
     Give me list of to do.
@@ -129,7 +141,7 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
 
    > **NOTE**: You might not be asked to login, if you've set the `USE_LOGIN` value to `false`.
 
-1. Clean up all the resources deployed.
+4. Clean up all the resources deployed.
 
     ```bash
     azd down --force --prune
@@ -140,6 +152,7 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
 - [OpenAI SDK - .NET](https://github.com/openai/openai-dotnet)
 - [OpenAI MCP samples](https://platform.openai.com/docs/guides/tools-connectors-mcp)
 - [Azure OpenAI - Next-generation API](https://learn.microsoft.com/azure/ai-foundry/openai/api-version-lifecycle#next-generation-api)
+- [How to switch between OpenAI and Azure OpenAI endpoints](https://learn.microsoft.com/azure/developer/ai/how-to/switching-endpoints?pivots=dotnet)
 - [.NET AI Template](https://devblogs.microsoft.com/dotnet/announcing-dotnet-ai-template-preview2/)
 - [MCP .NET samples](https://github.com/microsoft/mcp-dotnet-samples)
 - [MCP Todo app in TypeScript](https://github.com/Azure-Samples/mcp-container-ts)

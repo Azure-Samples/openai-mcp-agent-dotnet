@@ -27,10 +27,16 @@ param location string
     type: 'location'
   }
 })
-param aifLocation string
+param aoaiLocation string
 
-@description('Enable development mode for MCP server')
-param enableMcpServerDevelopmentMode bool
+@description('Enable development mode for both MCP server and client')
+@allowed([
+  'None'
+  'Server'
+  'Client'
+  'Both'
+])
+param enableDevelopmentMode string
 
 param mcpTodoServerAppExists bool
 param mcpTodoClientAppExists bool
@@ -45,7 +51,9 @@ param useLogin bool = true
 @allowed([
   'S0'
 ])
-param aifSkuName string = 'S0'
+param aoaiSkuName string = 'S0'
+@description('Whether to use API Key authentication for Azure OpenAI')
+param aoaiUseApiKey bool
 @description('GPT model to deploy')
 param gptModelName string = 'gpt-5-mini'
 @description('GPT model version')
@@ -94,13 +102,14 @@ module resources 'resources.bicep' = {
   params: {
     environmentName: environmentName
     location: location
-    aifLocation: aifLocation
+    aoaiLocation: aoaiLocation
     tags: tags
     principalId: principalId
     mcpTodoServerAppExists: mcpTodoServerAppExists
     mcpTodoClientAppExists: mcpTodoClientAppExists
     useLogin: useLogin
-    aifSkuName: aifSkuName
+    aoaiSkuName: aoaiSkuName
+    aoaiUseApiKey: aoaiUseApiKey
     gptModelName: gptModelName
     gptModelVersion: gptModelVersion
     gptCapacity: gptCapacity
@@ -109,7 +118,7 @@ module resources 'resources.bicep' = {
     jwtExpiry: jwtExpiry
     jwtSecret: jwtSecret
     jwtToken: jwtToken
-    enableMcpServerDevelopmentMode: enableMcpServerDevelopmentMode
+    enableDevelopmentMode: enableDevelopmentMode
     mcpServerIngressPort: mcpServerIngressPort
     mcpClientIngressPort: mcpClientIngressPort
     mcpServerIngressExternal: true

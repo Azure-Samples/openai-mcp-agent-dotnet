@@ -17,7 +17,7 @@ param location string = resourceGroup().location
   'switzerlandnorth'
   'uksouth'
 ])
-param aifLocation string
+param aoaiLocation string
 
 @description('Tags that will be applied to all resources')
 param tags object = {}
@@ -35,7 +35,9 @@ param useLogin bool = true
 @allowed([
   'S0'
 ])
-param aifSkuName string = 'S0'
+param aoaiSkuName string = 'S0'
+@description('Whether to use API Key authentication for Azure OpenAI')
+param aoaiUseApiKey bool
 @description('GPT model to deploy')
 param gptModelName string = 'gpt-5-mini'
 @description('GPT model version')
@@ -59,8 +61,14 @@ param jwtSecret string = ''
 @secure()
 param jwtToken string = ''
 
-@description('Enable development mode for MCP server')
-param enableMcpServerDevelopmentMode bool
+@description('Enable development mode for both MCP server and client')
+@allowed([
+  'None'
+  'Server'
+  'Client'
+  'Both'
+])
+param enableDevelopmentMode string
 
 param mcpServerIngressPort int = 3000
 param mcpClientIngressPort int = 8080
@@ -82,18 +90,20 @@ module monitoring 'br/public:avm/ptn/azd/monitoring:0.1.0' = {
   }
 }
 
+var disableLocalAuth = aoaiUseApiKey == true ? false : true
+
 // Azure OpenAI resource
 resource openAI 'Microsoft.CognitiveServices/accounts@2025-07-01-preview' = {
   name: '${abbrs.cognitiveServicesAccounts}${resourceToken}'
-  location: aifLocation
+  location: aoaiLocation
   kind: 'OpenAI'
   sku: {
-    name: aifSkuName
+    name: aoaiSkuName
   }
   properties: {
     customSubDomainName: '${abbrs.cognitiveServicesAccounts}${resourceToken}'
     publicNetworkAccess: 'Enabled'
-    disableLocalAuth: false
+    disableLocalAuth: disableLocalAuth
     networkAcls: {
       defaultAction: 'Allow'
       bypass: 'AzureServices'
@@ -275,7 +285,7 @@ module mcpTodoServerApp 'br/public:avm/res/app/container-app:0.16.0' = {
             name: 'JWT_TOKEN'
             secretRef: 'jwt-token'
           }
-        ], enableMcpServerDevelopmentMode == true ? [
+        ], enableDevelopmentMode == 'Both' || enableDevelopmentMode == 'Server' ? [
           {
             name: 'NODE_ENV'
             value: 'development'
@@ -314,6 +324,7 @@ module mcpTodoClientAppIdentityRoleAssignment './modules/role-assignment.bicep' 
   params: {
     managedIdentityName: mcpTodoClientAppIdentity.outputs.name
     storageAccountName: storageAccount.outputs.name
+    aifAccountName: openAI.name
     principalType: 'ServicePrincipal'
   }
 }
@@ -336,20 +347,22 @@ module mcpTodoClientApp 'br/public:avm/res/app/container-app:0.16.0' = {
       minReplicas: 1
       maxReplicas: 10
     }
-    secrets: [
+    secrets: concat([
       {
         name: 'openai-endpoint'
         value: openAI.properties.endpoint
       }
+    ], aoaiUseApiKey == true ? [
       {
         name: 'openai-api-key'
         value: openAI.listKeys().key1
       }
+    ] : [], [
       {
         name: 'jwt-token'
         value: jwtToken
       }
-    ]
+    ])
     containers: [
       {
         image: mcpTodoClientAppFetchLatestImage.outputs.?containers[?0].?image ?? 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
@@ -358,7 +371,7 @@ module mcpTodoClientApp 'br/public:avm/res/app/container-app:0.16.0' = {
           cpu: json('0.5')
           memory: '1.0Gi'
         }
-        env: [
+        env: concat([
           {
             name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
             value: monitoring.outputs.applicationInsightsConnectionString
@@ -379,19 +392,27 @@ module mcpTodoClientApp 'br/public:avm/res/app/container-app:0.16.0' = {
             name: 'OpenAI__Endpoint'
             secretRef: 'openai-endpoint'
           }
+        ], aoaiUseApiKey == true ? [
           {
             name: 'OpenAI__ApiKey'
             secretRef: 'openai-api-key'
           }
+        ] : [], [
           {
             name: 'OpenAI__DeploymentName'
             value: gptModelDeployment.properties.model.name
           }
+        ], enableDevelopmentMode == 'Both' || enableDevelopmentMode == 'Client' ? [
+          {
+            name: 'OpenAI__EnableLogging'
+            value: 'true'
+          }
+        ] : [], [
           {
             name: 'McpServers__JWT__Token'
             secretRef: 'jwt-token'
           }
-        ]
+        ])
       }
     ]
     managedIdentities: {
