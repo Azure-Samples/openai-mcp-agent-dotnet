@@ -90,7 +90,7 @@ module monitoring 'br/public:avm/ptn/azd/monitoring:0.1.0' = {
   }
 }
 
-var disableLocalAuth = aoaiUseApiKey == true ? false: true
+var disableLocalAuth = aoaiUseApiKey == true ? false : true
 
 // Azure OpenAI resource
 resource openAI 'Microsoft.CognitiveServices/accounts@2025-07-01-preview' = {
