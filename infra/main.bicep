@@ -41,9 +41,6 @@ param enableDevelopmentMode string
 param mcpTodoServerAppExists bool
 param mcpTodoClientAppExists bool
 
-@description('Id of the user or app to assign application roles')
-param principalId string
-
 @description('Whether to use the built-in login feature for the application or not')
 param useLogin bool = true
 
@@ -104,7 +101,6 @@ module resources 'resources.bicep' = {
     location: location
     aoaiLocation: aoaiLocation
     tags: tags
-    principalId: principalId
     mcpTodoServerAppExists: mcpTodoServerAppExists
     mcpTodoClientAppExists: mcpTodoClientAppExists
     useLogin: useLogin
