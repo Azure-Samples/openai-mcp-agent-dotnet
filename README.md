@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/azure-samples-openai-mcp-agent-dotnet-badge.png)](https://mseep.ai/app/azure-samples-openai-mcp-agent-dotnet)
+
 --- 
 name: .NET OpenAI MCP Agent
 description: This is an MCP agent app written in .NET, using OpenAI, with a remote MCP server written in TypeScript.
