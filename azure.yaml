@@ -3,7 +3,7 @@
 name: openai-mcp-agent-dotnet
 
 metadata:
-  template: azd-init@1.15.0
+  template: openai-mcp-agent-dotnet@1.15.0
 
 services:
   mcptodo-clientapp:
